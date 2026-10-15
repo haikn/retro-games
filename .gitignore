@@ -1,0 +1,8 @@
+# Local tool caches (machine-specific paths)
+.codebase-memory/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
