@@ -137,6 +137,14 @@ class LeaderboardService {
   /// Called once at launch, on the title screen.
   Future<void> init() => _signIn();
 
+  /// Takes over a sign-in done by another leaderboard of the same app (Game
+  /// Center / Play Games sign in once per app), then flushes this game's
+  /// pending score.
+  Future<void> adoptSignIn() async {
+    _signedIn = true;
+    await _flushPending();
+  }
+
   /// Records a new local best for the platform leaderboard.
   Future<void> submitBest(int score) async {
     final toSend = math.max(score, _store.pendingScore ?? 0);

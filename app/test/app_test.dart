@@ -86,6 +86,33 @@ void main() {
     },
   );
 
+  test('sign-in happens once for all games', () async {
+    final backends = <String, FakeBackend>{};
+    final store = LocalStore.memory();
+    await store.scoped('hop').setPendingScore(30);
+    final services = ArcadeServices.create(
+      store,
+      games,
+      backend: (g) => backends[g.id] = FakeBackend(),
+    );
+    await services.signIn();
+    final signIns = backends.values.fold(0, (n, b) => n + b.signIns);
+    expect(signIns, 1);
+    expect(services.leaderboards.values.every((l) => l.signedIn), isTrue);
+    expect(backends['hop']!.submitted, [30]);
+  });
+
+  test('a declined sign-in is not repeated for the other games', () async {
+    final backends = <String, FakeBackend>{};
+    final services = ArcadeServices.create(
+      LocalStore.memory(),
+      games,
+      backend: (g) => backends[g.id] = FakeBackend()..failSignIn = true,
+    );
+    await services.signIn();
+    expect(backends.values.fold(0, (n, b) => n + b.signIns), 1);
+  });
+
   test('each game gets its own storage namespace and leaderboard', () async {
     final store = LocalStore.memory();
     final services = ArcadeServices.create(

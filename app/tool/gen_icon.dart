@@ -1,11 +1,13 @@
-// Renders the app icon from the game's 1-bit helicopter sprite. Run from the
-// package root, then regenerate the platform icons:
+// Renders the LCD Arcade app icon: the launcher's 2×2 game tiles. Run from
+// app/, then regenerate the platform icons (and re-run `flutter test`: the
+// platform guard tests catch settings the icon tool has reverted before):
 //   dart run tool/gen_icon.dart
 //   dart run flutter_launcher_icons
 import 'dart:io';
 
-import 'package:copter/game/sprites.dart';
 import 'package:image/image.dart' as img;
+
+import 'icon_grids.dart';
 
 final lcd = img.ColorRgba8(0xC7, 0xF0, 0xD8, 0xFF);
 final ink = img.ColorRgba8(0x43, 0x52, 0x3D, 0xFF);
@@ -13,50 +15,48 @@ final clear = img.ColorRgba8(0, 0, 0, 0);
 
 const size = 1024;
 
-void _cell(img.Image image, int x, int y, int cell) => img.fillRect(
-  image,
-  x1: x,
-  y1: y,
-  x2: x + cell - 1,
-  y2: y + cell - 1,
-  color: ink,
-);
+void _rect(img.Image image, int x, int y, int w, int h, img.Color c) =>
+    img.fillRect(image, x1: x, y1: y, x2: x + w - 1, y2: y + h - 1, color: c);
 
-/// Helicopter (rotor frame A) with a short smoke trail, centred.
-void _heli(img.Image image, int cell, {int dy = 0}) {
-  final sprite = Sprites.heli[0];
-  const smoke = [(-2, 3), (-4, 2), (-6, 4)];
-  final w = (sprite.width + 6) * cell; // include the smoke trail
-  final x0 = (size - w) ~/ 2 + 6 * cell;
-  final y0 = (size - sprite.height * cell) ~/ 2 + dy;
-  for (var y = 0; y < sprite.height; y++) {
-    for (var x = 0; x < sprite.width; x++) {
-      if (sprite.at(x, y)) _cell(image, x0 + x * cell, y0 + y * cell, cell);
+/// Four tiles in a 2×2 grid; the first is inverted like the launcher's
+/// selected tile.
+void _tiles(img.Image image, {required int tile, required int gap, required int border}) {
+  final grid = 2 * tile + gap;
+  final origin = (size - grid) ~/ 2;
+  final cell = (tile - 2 * border) * 2 ~/ 3 ~/ 12; // icon ≈ 2/3 of the tile
+  for (var i = 0; i < 4; i++) {
+    final x = origin + (i % 2) * (tile + gap);
+    final y = origin + (i ~/ 2) * (tile + gap);
+    final selected = i == 0;
+    _rect(image, x, y, tile, tile, ink);
+    if (!selected) {
+      _rect(image, x + border, y + border, tile - 2 * border, tile - 2 * border, lcd);
     }
-  }
-  for (final (dx, sy) in smoke) {
-    _cell(image, x0 + dx * cell, y0 + sy * cell, cell);
+    final rows = iconGrids[i];
+    final ix = x + (tile - 12 * cell) ~/ 2;
+    final iy = y + (tile - 12 * cell) ~/ 2;
+    for (var r = 0; r < 12; r++) {
+      for (var c = 0; c < 12; c++) {
+        if (rows[r][c] == '#') {
+          _rect(image, ix + c * cell, iy + r * cell, cell, cell, selected ? lcd : ink);
+        }
+      }
+    }
   }
 }
 
 void main() {
   Directory('assets/icon').createSync(recursive: true);
 
-  // Full icon (iOS, legacy Android): LCD square, jagged cave floor.
-  const cell = 64; // floor pixels
-  final icon = img.Image(width: size, height: size, numChannels: 4)..clear(lcd);
-  _heli(icon, 52, dy: -80);
-  const floor = [3, 3, 2, 2, 3, 4, 4, 3, 2, 2, 3, 3, 4, 3, 3, 2];
-  for (var i = 0; i < floor.length; i++) {
-    for (var r = 0; r < floor[i]; r++) {
-      _cell(icon, i * cell, size - (r + 1) * cell, cell);
-    }
-  }
+  final icon = img.Image(width: size, height: size, numChannels: 4)
+    ..clear(lcd);
+  _tiles(icon, tile: 408, gap: 48, border: 24);
   File('assets/icon/icon.png').writeAsBytesSync(img.encodePng(icon));
 
-  // Android adaptive foreground: helicopter only, inside the 66% safe zone.
-  final fg = img.Image(width: size, height: size, numChannels: 4)..clear(clear);
-  _heli(fg, 40);
+  // Android adaptive foreground: inside the 66% safe zone.
+  final fg = img.Image(width: size, height: size, numChannels: 4)
+    ..clear(clear);
+  _tiles(fg, tile: 300, gap: 36, border: 18);
   File('assets/icon/icon_foreground.png').writeAsBytesSync(img.encodePng(fg));
 
   stdout.writeln('Wrote assets/icon/icon.png and icon_foreground.png');

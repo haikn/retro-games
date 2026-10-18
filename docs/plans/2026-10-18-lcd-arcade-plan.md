@@ -2,6 +2,18 @@
 
 Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-lcd-arcade-design.md) · Design: [LCD Arcade canvas](https://claude.ai/artifact/VyDKYb9SSQEexE7AsHFWok)
 
+## Status (2026-10-18)
+
+| Milestone | State |
+|---|---|
+| A0 Decisions | **Open**: C2 (collection name, app id), C4 (Blocks IP review) |
+| A1 Collection shell | Done (workspace, lcd_kit, launcher, orientation switching) |
+| A2 Snake | Done |
+| A3 Hop | Done |
+| A4 Blocks | Done, held back from release builds until C4 |
+| A5 Polish & QA | Code done (shared sign-in, collection icon, smoke test, Hop drawing cost); **device QA, performance and playtest tuning need real phones** |
+| A6 Release | Not started (store accounts and records) |
+
 ## Approach
 
 - **Collection shell first.** Turn Cave Copter into the first module of the collection before writing new games, so every game is built on the shared `lcd_kit` from day one.

@@ -5,7 +5,7 @@ Retro monochrome-LCD remake of the classic one-touch helicopter cave game; one o
 - Spec: [docs/superpowers/specs/2026-10-14-helicopter-game-design.md](docs/superpowers/specs/2026-10-14-helicopter-game-design.md) (rev 1.3)
 - Plan: [docs/superpowers/plans/2026-10-14-helicopter-game-plan.md](docs/superpowers/plans/2026-10-14-helicopter-game-plan.md)
 - UI design: [Cave Copter LCD UI canvas](https://claude.ai/artifact/BZmh5D8PVzgqnXemYQszzm)
-- Leaderboards: [docs/leaderboards-setup.md](docs/leaderboards-setup.md) (store-console steps)
+- Leaderboards: [docs/leaderboards-setup.md](../../../docs/leaderboards-setup.md) (store-console steps for all games)
 
 ## Layout
 

@@ -123,6 +123,7 @@ class HopArcade extends ArcadeGame {
 
   HopGame? _game;
   final _sounds = <String>[];
+  final _water = List<bool>.filled(HopRules.screenWidth, true);
 
   HopGame get core => _game!;
 
@@ -221,14 +222,22 @@ class HopArcade extends ArcadeGame {
           b.blit(sprite, x.round(), y + (truck ? 1 : 2));
         }
       case LaneKind.river:
-        for (var yy = 0; yy < HopRules.laneHeight; yy++) {
-          for (var x = 0; x < b.width; x++) {
-            final wave =
-                (yy % 4 == 1 && x % 6 == 0) || (yy % 4 == 3 && x % 6 == 3);
-            if (wave && !lane.onLog(x + 0.5, t)) b.set(x, y + yy);
+        // Log spans once per lane per frame, then mark which columns are
+        // water (no per-pixel log search).
+        final logs = lane.objectsAt(t).toList(growable: false);
+        _water.fillRange(0, _water.length, true);
+        for (final (xd, len) in logs) {
+          final x0 = xd.round().clamp(0, b.width);
+          final x1 = (xd.round() + len).clamp(0, b.width);
+          _water.fillRange(x0, x1, false);
+        }
+        for (var yy = 1; yy < HopRules.laneHeight; yy += 2) {
+          final offset = yy % 4 == 1 ? 0 : 3;
+          for (var x = offset; x < b.width; x += 6) {
+            if (_water[x]) b.set(x, y + yy);
           }
         }
-        for (final (xd, len) in lane.objectsAt(t)) {
+        for (final (xd, len) in logs) {
           final x = xd.round();
           b.fillRect(x, y + 2, len, 1);
           b.fillRect(x, y + 7, len, 1);

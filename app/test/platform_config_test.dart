@@ -51,4 +51,10 @@ void main() {
       games.any((g) => g.leaderboard.androidConfigured),
     );
   });
+
+  test('Xcode asset symbol setting intact (flutter_launcher_icons rewrites '
+      'it to "AppIcon")', () {
+    final pbx = File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
+    expect(pbx, isNot(contains('SYMBOL_EXTENSIONS = AppIcon')));
+  });
 }

@@ -79,6 +79,14 @@ void main() {
     expect(await service.show(), LeaderboardResult.showFailed);
   });
 
+  test('adopting a sign-in flushes this game\'s pending score', () async {
+    await store.setPendingScore(55);
+    await service.adoptSignIn();
+    expect(service.signedIn, isTrue);
+    expect(backend.signIns, 0);
+    expect(backend.submitted, [55]);
+  });
+
   test('a hanging sign-in times out instead of blocking', () {
     fakeAsync((async) {
       backend.hangSignIn = true;

@@ -84,9 +84,15 @@ class ArcadeServices {
   final SoundSetting sound;
   final Map<String, LeaderboardService> leaderboards;
 
+  /// Signs in once (the platform account is per app) and shares the result
+  /// with every game's leaderboard; a declined sign-in is not retried here.
   Future<void> signIn() async {
-    for (final l in leaderboards.values) {
-      await l.init();
+    final all = leaderboards.values.toList();
+    if (all.isEmpty) return;
+    await all.first.init();
+    if (!all.first.signedIn) return;
+    for (final l in all.skip(1)) {
+      await l.adoptSignIn();
     }
   }
 
