@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app/app_flow.dart';
 import 'app/game_screen.dart';
 import 'game/helicopter_game.dart';
 
@@ -25,15 +26,23 @@ class CaveCopterApp extends StatefulWidget {
 }
 
 class _CaveCopterAppState extends State<CaveCopterApp> {
-  late final HelicopterGame _game =
-      (widget.gameFactory ?? HelicopterGame.new)();
+  late final AppFlow _flow = AppFlow(
+    game: (widget.gameFactory ?? HelicopterGame.new)(),
+    onExit: SystemNavigator.pop,
+  );
+
+  @override
+  void dispose() {
+    _flow.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cave Copter',
       debugShowCheckedModeBanner: false,
-      home: GameScreen(game: _game),
+      home: GameScreen(flow: _flow),
     );
   }
 }
