@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../game/helicopter_game.dart';
@@ -23,8 +25,9 @@ class AppFlow extends ChangeNotifier {
   /// Leaves the app (Android back on title / main menu).
   final VoidCallback? onExit;
 
-  /// Opens the platform leaderboard (wired in M5).
-  final VoidCallback? onOnlineScores;
+  /// Opens the platform leaderboard; returns a short message to show when
+  /// that was not possible.
+  final Future<String?> Function()? onOnlineScores;
 
   /// Sound setting changed (audio + persistence).
   final void Function(bool soundOn)? onSoundChanged;
@@ -36,6 +39,10 @@ class AppFlow extends ChangeNotifier {
   AppScreen get screen => _screen;
 
   bool soundOn;
+
+  /// Short non-blocking message (e.g. sign-in failed), cleared after 2 s.
+  final ValueNotifier<String?> notice = ValueNotifier(null);
+  Timer? _noticeTimer;
 
   void _go(AppScreen next) {
     onKeyClick?.call();
@@ -70,7 +77,21 @@ class AppFlow extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showOnlineScores() => onOnlineScores?.call();
+  Future<void> showOnlineScores() async {
+    onKeyClick?.call();
+    final message = await onOnlineScores?.call();
+    if (message == null) return;
+    _noticeTimer?.cancel();
+    notice.value = message;
+    _noticeTimer = Timer(const Duration(seconds: 2), () => notice.value = null);
+  }
+
+  @override
+  void dispose() {
+    _noticeTimer?.cancel();
+    notice.dispose();
+    super.dispose();
+  }
 
   /// Handles the Android back button. Returns false when the app exits.
   bool back() {

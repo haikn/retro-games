@@ -9,6 +9,7 @@ import 'app/game_screen.dart';
 import 'app/game_services.dart';
 import 'game/helicopter_game.dart';
 import 'services/audio_service.dart';
+import 'services/leaderboard_service.dart';
 import 'services/local_store.dart';
 
 Future<void> main() async {
@@ -37,27 +38,42 @@ Future<void> main() async {
   final store = await LocalStore.open();
   final audio = AudioService(FlameSoundPlayer(), muted: store.muted);
   unawaited(audio.load()); // never delays the first frame
+  final leaderboard = LeaderboardService(platformLeaderboardBackend(), store);
   runApp(
     CaveCopterApp(
-      flow: buildFlow(store: store, audio: audio),
+      flow: buildFlow(store: store, audio: audio, leaderboard: leaderboard),
     ),
   );
+  // Sign in once, while the title screen shows (never mid-run).
+  unawaited(leaderboard.init());
 }
 
 /// Builds the game and connects it to storage and sound.
 AppFlow buildFlow({
   required LocalStore store,
   required AudioService audio,
+  LeaderboardService? leaderboard,
   HelicopterGame? game,
 }) {
   final g = (game ?? HelicopterGame())..best = store.best;
-  final services = GameServices(game: g, audio: audio, store: store)..attach();
+  final services = GameServices(
+    game: g,
+    audio: audio,
+    store: store,
+    leaderboard: leaderboard,
+  )..attach();
   return AppFlow(
     game: g,
     soundOn: !store.muted,
     onExit: SystemNavigator.pop,
     onSoundChanged: (on) => unawaited(services.setSound(on)),
     onKeyClick: () => unawaited(services.click()),
+    onOnlineScores: () async => switch (await leaderboard?.show()) {
+      LeaderboardResult.shown => null,
+      LeaderboardResult.signInFailed => 'Sign-in failed',
+      LeaderboardResult.showFailed => 'Try again later',
+      LeaderboardResult.unavailable || null => 'Not available',
+    },
   );
 }
 

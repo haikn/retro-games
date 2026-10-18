@@ -1,5 +1,6 @@
 import 'package:cave_copter/app/app_flow.dart';
 import 'package:cave_copter/game/helicopter_game.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -15,7 +16,10 @@ void main() {
     flow = AppFlow(
       game: game,
       onExit: () => exits++,
-      onOnlineScores: () => online++,
+      onOnlineScores: () async {
+        online++;
+        return null;
+      },
     );
   });
 
@@ -117,9 +121,26 @@ void main() {
     expect(notified, 1);
   });
 
-  test('online scores are delegated', () {
-    flow.showOnlineScores();
+  test('online scores are delegated', () async {
+    await flow.showOnlineScores();
     expect(online, 1);
+    expect(flow.notice.value, isNull);
+  });
+
+  test('a failed Online scores shows a notice for 2 s', () {
+    fakeAsync((async) {
+      final f = AppFlow(
+        game: game,
+        onOnlineScores: () async => 'Sign-in failed',
+      );
+      f.showOnlineScores();
+      async.flushMicrotasks();
+      expect(f.notice.value, 'Sign-in failed');
+      async.elapse(const Duration(milliseconds: 1900));
+      expect(f.notice.value, 'Sign-in failed');
+      async.elapse(const Duration(milliseconds: 200));
+      expect(f.notice.value, isNull);
+    });
   });
 
   test('changing screens forgets held pointers', () {

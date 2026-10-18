@@ -2,16 +2,23 @@ import 'dart:async';
 
 import '../game/helicopter_game.dart';
 import '../services/audio_service.dart';
+import '../services/leaderboard_service.dart';
 import '../services/local_store.dart';
 
 /// Maps game events to sound and persistence, keeping the game itself free
 /// of service code.
 class GameServices {
-  GameServices({required this.game, required this.audio, required this.store});
+  GameServices({
+    required this.game,
+    required this.audio,
+    required this.store,
+    this.leaderboard,
+  });
 
   final HelicopterGame game;
   final AudioService audio;
   final LocalStore store;
+  final LeaderboardService? leaderboard;
   GamePhase? _last;
 
   void attach() {
@@ -34,7 +41,10 @@ class GameServices {
     }
     if (phase == GamePhase.crashed && _last != GamePhase.crashed) {
       unawaited(audio.crash());
-      if (game.lastRunNewBest) unawaited(store.recordBest(game.best));
+      if (game.lastRunNewBest) {
+        unawaited(store.recordBest(game.best));
+        unawaited(leaderboard?.submitBest(game.best));
+      }
     }
     _last = phase;
   }

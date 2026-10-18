@@ -5,13 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Logical surface of exactly 800×400, so virtual px = logical px.
-Future<(AppFlow, HelicopterGame)> pumpApp(WidgetTester tester) async {
+Future<(AppFlow, HelicopterGame)> pumpApp(
+  WidgetTester tester, {
+  Future<String?> Function()? onOnlineScores,
+}) async {
   tester.view.physicalSize = const Size(1600, 800);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
   final game = HelicopterGame(seedSource: () => 1);
   var exits = 0;
-  final flow = AppFlow(game: game, onExit: () => exits++);
+  final flow = AppFlow(
+    game: game,
+    onExit: () => exits++,
+    onOnlineScores: onOnlineScores,
+  );
   await tester.pumpWidget(MaterialApp(home: GameScreen(flow: flow)));
   await tester.pump();
   await tester.pump();
@@ -210,5 +217,21 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text('Paused'), findsOneWidget);
+  });
+
+  testWidgets('Online scores failure shows a short notice', (tester) async {
+    final (flow, _) = await pumpApp(
+      tester,
+      onOnlineScores: () async => 'Sign-in failed',
+    );
+    flow.start();
+    flow.openTopScore();
+    await tester.pump();
+    expect(find.text('On this phone'), findsOneWidget);
+    await tester.tap(find.text('Online scores'));
+    await tester.pump();
+    expect(find.text('Sign-in failed'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('On this phone'), findsOneWidget);
   });
 }

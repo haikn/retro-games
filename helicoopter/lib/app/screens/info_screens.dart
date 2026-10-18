@@ -32,7 +32,11 @@ class TopScoreScreen extends StatelessWidget {
           top: 200,
           height: 50,
           child: Center(
-            child: Text('On this phone', style: LcdText.body(p.ink)),
+            child: ValueListenableBuilder<String?>(
+              valueListenable: flow.notice,
+              builder: (context, notice, _) =>
+                  Text(notice ?? 'On this phone', style: LcdText.body(p.ink)),
+            ),
           ),
         ),
         Positioned(

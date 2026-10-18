@@ -1,10 +1,12 @@
 import 'package:cave_copter/app/game_services.dart';
 import 'package:cave_copter/game/helicopter_game.dart';
 import 'package:cave_copter/services/audio_service.dart';
+import 'package:cave_copter/services/leaderboard_service.dart';
 import 'package:cave_copter/services/local_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../services/audio_service_test.dart' show FakePlayer;
+import '../services/leaderboard_service_test.dart' show FakeBackend;
 
 void main() {
   late FakePlayer player;
@@ -12,6 +14,7 @@ void main() {
   late LocalStore store;
   late HelicopterGame game;
   late GameServices services;
+  late FakeBackend backend;
 
   setUp(() async {
     player = FakePlayer();
@@ -19,7 +22,15 @@ void main() {
     await audio.load();
     store = LocalStore.memory();
     game = HelicopterGame(seedSource: () => 1)..newRun();
-    services = GameServices(game: game, audio: audio, store: store)..attach();
+    backend = FakeBackend();
+    final leaderboard = LeaderboardService(backend, store);
+    await leaderboard.init();
+    services = GameServices(
+      game: game,
+      audio: audio,
+      store: store,
+      leaderboard: leaderboard,
+    )..attach();
   });
 
   tearDown(() => services.detach());
@@ -50,6 +61,18 @@ void main() {
     expect(player.played, [AudioService.crashFile]);
     expect(store.best, game.best);
     expect(store.best, greaterThan(0));
+    expect(backend.submitted, [game.best]); // new best goes to the board
+  });
+
+  test('a run that is not a new best is not submitted', () async {
+    game.best = 1 << 30;
+    game.pointerDown();
+    game.pointerUp();
+    for (var i = 0; i < 3000 && game.phase.value == GamePhase.playing; i++) {
+      game.update(1 / 60);
+    }
+    await settle();
+    expect(backend.submitted, isEmpty);
   });
 
   test('jingle plays with the game-over dialog only for a new best', () async {
