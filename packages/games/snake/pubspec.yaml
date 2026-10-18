@@ -1,0 +1,22 @@
+name: snake
+description: "Snake: the classic phone game, for the LCD Arcade collection."
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  arcade_core:
+  lcd_kit:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/audio/

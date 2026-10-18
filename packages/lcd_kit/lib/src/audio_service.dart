@@ -80,27 +80,33 @@ class FlameSoundPlayer implements SoundPlayer {
 }
 
 /// Game sounds. Failures are logged and never thrown; if loading fails the
-/// game simply stays silent.
+/// game simply stays silent. Every game ships `click.wav` (menu keys) and
+/// `best.wav` (new-best jingle) next to its own sounds.
 class AudioService {
-  AudioService(this._player, {this._muted = false});
+  AudioService(this._player, {required List<String> files, this._muted = false})
+    : files = {clickFile, bestFile, ...files}.toList();
 
-  static const rotor = 'rotor.wav';
-  static const crashFile = 'crash.wav';
-  static const bestFile = 'best.wav';
   static const clickFile = 'click.wav';
+  static const bestFile = 'best.wav';
+
+  /// Files preloaded by [load].
+  final List<String> files;
 
   final SoundPlayer _player;
   bool _available = false;
   bool _muted;
-  bool _rotorOn = false;
+  String? _loop;
 
   bool get available => _available;
   bool get muted => _muted;
 
+  /// The looping sound, if one is playing.
+  String? get looping => _loop;
+
   Future<void> load() async {
     try {
       await _player.configureAmbient();
-      await _player.preload([rotor, crashFile, bestFile, clickFile]);
+      await _player.preload(files);
       _available = true;
     } catch (e) {
       debugPrint('Audio disabled: $e');
@@ -117,32 +123,30 @@ class AudioService {
     }
   }
 
-  Future<void> startRotor() async {
-    if (!_canPlay || _rotorOn) return;
-    _rotorOn = true;
-    await _guard('rotor', () => _player.startLoop(rotor, 0.5));
+  /// Plays [file] once (ignored when muted or unavailable).
+  Future<void> play(String file, {double volume = 0.8}) async {
+    if (_canPlay) await _guard(file, () => _player.play(file, volume));
   }
 
-  Future<void> stopRotor() async {
-    if (!_rotorOn) return;
-    _rotorOn = false;
-    await _guard('rotor stop', _player.stopLoop);
+  /// Loops [file] until [stopLoop]; one loop at a time.
+  Future<void> startLoop(String file, {double volume = 0.5}) async {
+    if (!_canPlay || _loop != null) return;
+    _loop = file;
+    await _guard('$file loop', () => _player.startLoop(file, volume));
   }
 
-  Future<void> crash() async {
-    if (_canPlay) await _guard('crash', () => _player.play(crashFile, 0.9));
+  Future<void> stopLoop() async {
+    if (_loop == null) return;
+    _loop = null;
+    await _guard('loop stop', _player.stopLoop);
   }
 
-  Future<void> newBest() async {
-    if (_canPlay) await _guard('jingle', () => _player.play(bestFile, 0.9));
-  }
+  Future<void> click() => play(clickFile, volume: 0.6);
 
-  Future<void> click() async {
-    if (_canPlay) await _guard('click', () => _player.play(clickFile, 0.6));
-  }
+  Future<void> newBest() => play(bestFile, volume: 0.9);
 
   Future<void> setMuted(bool value) async {
     _muted = value;
-    if (value) await stopRotor();
+    if (value) await stopLoop();
   }
 }

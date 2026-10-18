@@ -10,6 +10,7 @@ import 'app/app_flow.dart';
 import 'app/game_screen.dart';
 import 'app/game_services.dart';
 import 'copter_leaderboard.dart';
+import 'copter_sounds.dart';
 import 'game/helicopter_game.dart';
 
 export 'copter_leaderboard.dart';
@@ -78,6 +79,7 @@ class _CopterViewState extends State<CopterView> {
     _game = (widget.game ?? HelicopterGame())..best = host.store.best;
     _audio = AudioService(
       widget.player ?? FlameSoundPlayer.forPackage('copter'),
+      files: CopterSounds.all,
       muted: !host.sound.on,
     );
     unawaited(_audio.load());
@@ -109,7 +111,7 @@ class _CopterViewState extends State<CopterView> {
   @override
   void dispose() {
     _services.detach();
-    unawaited(_audio.stopRotor());
+    unawaited(_audio.stopLoop());
     _flow.dispose();
     super.dispose();
   }

@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   lcd_kit:
   copter:
+  snake:
 
 dev_dependencies:
   flutter_test:

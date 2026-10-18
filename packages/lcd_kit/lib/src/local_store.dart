@@ -91,6 +91,12 @@ class LocalStore {
   Future<void> setPendingScore(int? score) =>
       _write(_scoped(pendingKey), score);
 
+  /// A per-game integer setting (e.g. `level`), or [fallback].
+  int intSetting(String key, int fallback) =>
+      _read<int>(_scoped(key)) ?? fallback;
+  Future<void> setIntSetting(String key, int value) =>
+      _write(_scoped(key), value);
+
   bool get muted => _read<bool>(mutedKey) ?? false;
   Future<void> setMuted(bool value) => _write(mutedKey, value);
 }

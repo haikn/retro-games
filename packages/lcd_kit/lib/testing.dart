@@ -2,6 +2,9 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 
 import 'lcd_kit.dart';
 
@@ -62,5 +65,33 @@ class FakeBackend implements LeaderboardBackend {
   Future<void> show() async {
     if (failShow) throw Exception('ui failed');
     shows++;
+  }
+}
+
+/// Loads the real Silkscreen font so widget tests lay text out at its true
+/// width (the default test font draws every glyph as a square). Call inside
+/// `tester.runAsync`. Finds `packages/lcd_kit/assets/fonts` from the
+/// current directory upward.
+Future<void> loadLcdFont() async {
+  var dir = Directory.current;
+  while (true) {
+    for (final candidate in [
+      '${dir.path}/assets/fonts/Silkscreen-Regular.ttf',
+      '${dir.path}/packages/lcd_kit/assets/fonts/Silkscreen-Regular.ttf',
+    ]) {
+      final regular = File(candidate);
+      if (regular.existsSync()) {
+        final bold = File(candidate.replaceFirst('Regular', 'Bold'));
+        ByteData bytes(File f) => f.readAsBytesSync().buffer.asByteData();
+        await (FontLoader('packages/lcd_kit/Silkscreen')
+              ..addFont(Future.value(bytes(regular)))
+              ..addFont(Future.value(bytes(bold))))
+            .load();
+        return;
+      }
+    }
+    final parent = dir.parent;
+    if (parent.path == dir.path) throw StateError('Silkscreen font not found');
+    dir = parent;
   }
 }

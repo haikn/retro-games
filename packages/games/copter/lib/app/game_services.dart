@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../copter_sounds.dart';
 import '../game/helicopter_game.dart';
 
 import 'package:lcd_kit/lcd_kit.dart';
@@ -34,12 +35,12 @@ class GameServices {
   void _onPhase() {
     final phase = game.phase.value;
     if (phase == GamePhase.playing) {
-      unawaited(audio.startRotor());
+      unawaited(audio.startLoop(CopterSounds.rotor, volume: 0.5));
     } else {
-      unawaited(audio.stopRotor());
+      unawaited(audio.stopLoop());
     }
     if (phase == GamePhase.crashed && _last != GamePhase.crashed) {
-      unawaited(audio.crash());
+      unawaited(audio.play(CopterSounds.crash, volume: 0.9));
       if (game.lastRunNewBest) {
         unawaited(store.recordBest(game.best));
         unawaited(leaderboard?.submitBest(game.best));

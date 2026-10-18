@@ -49,10 +49,10 @@ void main() {
     tester,
   ) async {
     await pumpArcade(tester);
-    await tester.tap(find.text('Snake'));
+    await tester.tap(find.text('Hop'));
     await tester.pump();
     expect(find.text('Coming soon'), findsOneWidget);
-    expect(find.text('2/4'), findsOneWidget);
+    expect(find.text('4/4'), findsOneWidget);
     expect(orientationRequests, isEmpty);
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Coming soon'), findsNothing);
@@ -101,7 +101,22 @@ void main() {
     await host.store.recordBest(42);
     expect(store.scoped('copter').best, 42);
     expect(store.scoped('snake').best, 0);
-    expect(services.leaderboards.keys, ['copter']);
+    expect(services.leaderboards.keys, ['copter', 'snake']);
+  });
+
+  testWidgets('Snake opens in portrait at its menu and returns', (
+    tester,
+  ) async {
+    await pumpArcade(tester);
+    await tester.tap(find.text('Snake'));
+    await tester.pump();
+    expect(orientationRequests.last, ['DeviceOrientation.portraitUp']);
+    await tester.pump();
+    expect(find.text('Level: 5'), findsOneWidget);
+    await tester.tap(find.text('All games'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Games'), findsOneWidget);
   });
 }
 

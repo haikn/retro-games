@@ -58,3 +58,29 @@ Uint8List encodeWav(List<double> samples) {
   }
   return b.buffer.asUint8List();
 }
+
+/// Menu key click shared by every game (`click.wav`).
+List<double> keyClick() => beep(1500, 0.025, 0.22);
+
+/// Three-note rising new-best jingle shared by every game (`best.wav`).
+List<double> bestJingle() => [
+  ...beep(1046.5, 0.1, 0.28),
+  ...silence(0.02),
+  ...beep(1318.5, 0.1, 0.28),
+  ...silence(0.02),
+  ...beep(1568.0, 0.22, 0.28),
+];
+
+/// Writes each sound as `<dir>/<name>.wav`; returns the written paths.
+List<String> writeSounds(
+  String dir,
+  Map<String, List<double> Function()> sounds,
+  void Function(String path, List<int> bytes) write,
+) => [
+  for (final MapEntry(key: name, value: make) in sounds.entries)
+    () {
+      final path = '$dir/$name.wav';
+      write(path, encodeWav(make()));
+      return path;
+    }(),
+];

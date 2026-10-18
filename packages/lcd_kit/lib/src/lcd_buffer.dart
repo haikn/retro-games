@@ -86,6 +86,21 @@ class LcdBuffer {
     }
   }
 
+  /// Turns a rectangle off (clipped), e.g. to keep a scrolling world out of
+  /// the HUD strip.
+  void clearRect(int x, int y, int w, int h) {
+    final x0 = x < 0 ? 0 : x;
+    final y0 = y < 0 ? 0 : y;
+    final x1 = x + w > width ? width : x + w;
+    final y1 = y + h > height ? height : y + h;
+    for (var cy = y0; cy < y1; cy++) {
+      final row = cy * width;
+      for (var cx = x0; cx < x1; cx++) {
+        _cells[row + cx] = 0;
+      }
+    }
+  }
+
   void blit(Sprite1 sprite, int x, int y) {
     for (var sy = 0; sy < sprite.height; sy++) {
       for (var sx = 0; sx < sprite.width; sx++) {

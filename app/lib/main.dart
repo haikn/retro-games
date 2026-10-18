@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lcd_kit/lcd_kit.dart';
+import 'package:snake/snake.dart';
 
 import 'launcher/launcher_screen.dart';
 import 'launcher/orientation.dart';
@@ -33,12 +34,11 @@ Future<void> main() async {
 }
 
 /// The collection, in launcher order.
-const games = <GameModule>[CopterModule()];
+const games = <GameModule>[CopterModule(), SnakeModule()];
 
 /// Launcher tiles: playable games, then games still to come.
 final launcherEntries = <LauncherEntry>[
   for (final g in games) LauncherEntry.of(g),
-  const LauncherEntry(title: 'Snake', icon: _snakeIcon),
   const LauncherEntry(title: 'Blocks', icon: _blocksIcon),
   const LauncherEntry(title: 'Hop', icon: _hopIcon),
 ];
@@ -133,21 +133,6 @@ class LcdArcadeApp extends StatelessWidget {
     await lockOrientation(GameOrientation.portrait);
   }
 }
-
-const _snakeIcon = [
-  '............',
-  '..#######...',
-  '..#.........',
-  '..#.........',
-  '..#######...',
-  '........#...',
-  '........#...',
-  '.########...',
-  '.#..........',
-  '.#.......#..',
-  '.##.........',
-  '............',
-];
 
 const _blocksIcon = [
   '............',

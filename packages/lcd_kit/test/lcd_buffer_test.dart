@@ -101,4 +101,15 @@ void main() {
     plain.endFrame();
     expect(plain.ghostLevel(0, 0), 0);
   });
+
+  test('clearRect turns pixels off, clipped', () {
+    b.beginFrame(0);
+    b.fillRect(0, 0, 8, 4);
+    b.clearRect(-2, 1, 4, 10);
+    expect(b.isLit(0, 0), isTrue);
+    expect(b.isLit(0, 1), isFalse);
+    expect(b.isLit(1, 3), isFalse);
+    expect(b.isLit(2, 1), isTrue);
+    expect(b.litCount, 32 - 6);
+  });
 }

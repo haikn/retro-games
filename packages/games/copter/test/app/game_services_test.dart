@@ -1,4 +1,5 @@
 import 'package:copter/app/game_services.dart';
+import 'package:copter/copter_sounds.dart';
 import 'package:copter/game/helicopter_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,7 +16,7 @@ void main() {
 
   setUp(() async {
     player = FakePlayer();
-    audio = AudioService(player);
+    audio = AudioService(player, files: CopterSounds.all);
     await audio.load();
     store = LocalStore.memory();
     game = HelicopterGame(seedSource: () => 1)..newRun();
@@ -37,14 +38,14 @@ void main() {
   test('rotor loops only while playing', () async {
     game.pointerDown();
     await settle();
-    expect(player.looping, AudioService.rotor);
+    expect(player.looping, CopterSounds.rotor);
     game.pause();
     await settle();
     expect(player.looping, isNull);
     game.resume();
     game.pointerDown();
     await settle();
-    expect(player.looping, AudioService.rotor);
+    expect(player.looping, CopterSounds.rotor);
   });
 
   test('crash: rotor stops, crash sound, new best saved', () async {
@@ -55,7 +56,7 @@ void main() {
     }
     await settle();
     expect(player.looping, isNull);
-    expect(player.played, [AudioService.crashFile]);
+    expect(player.played, [CopterSounds.crash]);
     expect(store.best, game.best);
     expect(store.best, greaterThan(0));
     expect(backend.submitted, [game.best]); // new best goes to the board
@@ -80,7 +81,7 @@ void main() {
       if (game.gameOverVisible.value) break;
     }
     await settle();
-    expect(player.played, [AudioService.crashFile, AudioService.bestFile]);
+    expect(player.played, [CopterSounds.crash, AudioService.bestFile]);
 
     // Second run, worse than the best: no jingle.
     player.played.clear();
@@ -95,7 +96,7 @@ void main() {
       if (game.gameOverVisible.value) break;
     }
     await settle();
-    expect(player.played, [AudioService.crashFile]);
+    expect(player.played, [CopterSounds.crash]);
   });
 
   test('sound setting updates audio and is persisted', () async {

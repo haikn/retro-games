@@ -283,8 +283,8 @@ class LcdHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = LcdText.body(palette.ink);
     return Positioned(
-      left: 25,
-      right: 25,
+      left: LcdScreen.sizeOf(context).width < 500 ? 10 : 25,
+      right: LcdScreen.sizeOf(context).width < 500 ? 10 : 25,
       top: 0,
       height: 55,
       child: Row(

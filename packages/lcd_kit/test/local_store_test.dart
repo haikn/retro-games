@@ -106,4 +106,12 @@ void main() {
     expect(app.scoped('hop').best, 7);
     expect(app.scoped('snake').best, 0);
   });
+
+  test('integer settings are per game with a fallback', () async {
+    final app = await open();
+    expect(app.scoped('snake').intSetting('level', 5), 5);
+    await app.scoped('snake').setIntSetting('level', 8);
+    expect(app.scoped('snake').intSetting('level', 5), 8);
+    expect(app.scoped('blocks').intSetting('level', 1), 1);
+  });
 }

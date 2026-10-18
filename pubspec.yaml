@@ -10,3 +10,4 @@ workspace:
   - packages/arcade_core
   - packages/lcd_kit
   - packages/games/copter
+  - packages/games/snake

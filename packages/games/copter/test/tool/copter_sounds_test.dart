@@ -33,12 +33,10 @@ void main() {
     }
   });
 
-  test('crash beeps descend; new-best notes rise', () {
+  test('crash beeps descend', () {
     expect(
       crashNotesHz,
       orderedEquals([...crashNotesHz]..sort((a, b) => b.compareTo(a))),
     );
-    expect(bestNotesHz, orderedEquals([...bestNotesHz]..sort()));
-    expect(bestNotesHz, hasLength(3));
   });
 }
