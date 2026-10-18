@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blocks/blocks.dart';
 import 'package:copter/copter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -35,12 +36,24 @@ Future<void> main() async {
 }
 
 /// The collection, in launcher order.
-const games = <GameModule>[CopterModule(), SnakeModule(), HopModule()];
+const games = <GameModule>[
+  CopterModule(),
+  SnakeModule(),
+  BlocksModule(),
+  HopModule(),
+];
 
-/// Launcher tiles: playable games, then games still to come.
-final launcherEntries = <LauncherEntry>[
-  for (final g in games) LauncherEntry.of(g),
-  const LauncherEntry(title: 'Blocks', icon: _blocksIcon),
+/// Launcher tiles. A game not cleared for release (e.g. Blocks, pending its
+/// IP review) is shown as "Coming soon" in release builds.
+List<LauncherEntry> launcherEntriesFor(
+  List<GameModule> games, {
+  bool release = kReleaseMode,
+}) => [
+  for (final g in games)
+    if (g.releaseCleared || !release)
+      LauncherEntry.of(g)
+    else
+      LauncherEntry(title: g.title, icon: g.icon),
 ];
 
 /// Storage, sound and one leaderboard per game, shared by the whole app.
@@ -103,7 +116,7 @@ class LcdArcadeApp extends StatelessWidget {
       theme: ThemeData(scaffoldBackgroundColor: palette.bezel),
       home: Builder(
         builder: (context) => LauncherScreen(
-          entries: launcherEntries,
+          entries: launcherEntriesFor(games),
           palette: palette,
           onOpen: (module) => openGame(context, module),
         ),
@@ -133,18 +146,3 @@ class LcdArcadeApp extends StatelessWidget {
     await lockOrientation(GameOrientation.portrait);
   }
 }
-
-const _blocksIcon = [
-  '............',
-  '....##......',
-  '....##......',
-  '............',
-  '............',
-  '............',
-  '##....##..##',
-  '##....##..##',
-  '####..######',
-  '####..######',
-  '############',
-  '############',
-];

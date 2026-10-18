@@ -40,22 +40,18 @@ void main() {
     await pumpArcade(tester);
     expect(find.text('Games'), findsOneWidget);
     expect(find.text('1/4'), findsOneWidget);
-    for (final title in ['Copter', 'Snake', 'Hop', 'Blocks']) {
+    for (final title in ['Copter', 'Snake', 'Blocks', 'Hop']) {
       expect(find.text(title), findsOneWidget);
     }
   });
 
-  testWidgets('games still to come say so and stay on the launcher', (
-    tester,
-  ) async {
-    await pumpArcade(tester);
-    await tester.tap(find.text('Blocks'));
-    await tester.pump();
-    expect(find.text('Coming soon'), findsOneWidget);
-    expect(find.text('4/4'), findsOneWidget);
-    expect(orientationRequests, isEmpty);
-    await tester.pump(const Duration(seconds: 3));
-    expect(find.text('Coming soon'), findsNothing);
+  test('release builds hold back games not cleared for release', () {
+    final release = launcherEntriesFor(games, release: true);
+    final debug = launcherEntriesFor(games, release: false);
+    expect(release.map((e) => e.title), ['Copter', 'Snake', 'Blocks', 'Hop']);
+    expect(release[2].module, isNull); // Blocks: pending decision C4
+    expect(release.where((e) => e.module != null), hasLength(3));
+    expect(debug.every((e) => e.module != null), isTrue);
   });
 
   testWidgets(
@@ -101,7 +97,7 @@ void main() {
     await host.store.recordBest(42);
     expect(store.scoped('copter').best, 42);
     expect(store.scoped('snake').best, 0);
-    expect(services.leaderboards.keys, ['copter', 'snake', 'hop']);
+    expect(services.leaderboards.keys, ['copter', 'snake', 'blocks', 'hop']);
   });
 
   testWidgets('Snake opens in portrait at its menu and returns', (

@@ -12,3 +12,4 @@ workspace:
   - packages/games/copter
   - packages/games/snake
   - packages/games/hop
+  - packages/games/blocks

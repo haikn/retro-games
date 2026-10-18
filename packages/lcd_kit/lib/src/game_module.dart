@@ -56,6 +56,11 @@ abstract class GameModule {
 
   LeaderboardIds get leaderboard;
 
+  /// False while a game may not ship yet (e.g. pending legal review):
+  /// release builds then show its tile as "Coming soon"; debug builds still
+  /// open it.
+  bool get releaseCleared => true;
+
   /// The game's own screens, starting at its menu.
   Widget build(BuildContext context, GameHost host);
 }
