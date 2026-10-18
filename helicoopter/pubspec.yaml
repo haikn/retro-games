@@ -38,7 +38,6 @@ dependencies:
   flame_audio: ^2.12.2
   games_services: ^5.3.0
   shared_preferences: ^2.5.6
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -50,6 +49,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flame_test: ^2.3.1
+  image: ^4.12.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -70,6 +72,7 @@ flutter:
           weight: 700
 
   assets:
+    - assets/audio/
     - assets/fonts/Silkscreen-OFL.txt
 
   # To add assets to your application, add an assets section, like this:
@@ -102,3 +105,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# dart run flutter_launcher_icons   (source art: dart run tool/gen_icon.dart)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  remove_alpha_ios: true
+  adaptive_icon_background: "#C7F0D8"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+  min_sdk_android: 21
+
+# dart run flutter_native_splash:create   (plain LCD colour, no image)
+flutter_native_splash:
+  color: "#C7F0D8"
+  android_12:
+    color: "#C7F0D8"
+  fullscreen: true

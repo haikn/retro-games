@@ -106,6 +106,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 ? GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: flow.start,
+                    // Open-source licences (spec: Store & Compliance).
+                    onLongPress: () => showLicensePage(
+                      context: context,
+                      applicationName: 'Cave Copter',
+                    ),
                     child: fullScreen,
                   )
                 : fullScreen,

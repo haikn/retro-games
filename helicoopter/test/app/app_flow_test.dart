@@ -129,4 +129,22 @@ void main() {
     flow.openMenu();
     expect(game.holding, isFalse);
   });
+
+  test('sound changes and key clicks are reported', () {
+    final sounds = <bool>[];
+    var clicks = 0;
+    final f = AppFlow(
+      game: game,
+      soundOn: false,
+      onSoundChanged: sounds.add,
+      onKeyClick: () => clicks++,
+    );
+    expect(f.soundOn, isFalse);
+    f.start();
+    expect(clicks, 1);
+    f.toggleSound(); // turning sound on clicks
+    f.toggleSound(); // turning it off is silent
+    expect(sounds, [true, false]);
+    expect(clicks, 2);
+  });
 }

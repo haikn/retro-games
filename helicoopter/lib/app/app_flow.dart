@@ -9,7 +9,14 @@ enum AppScreen { title, menu, game, topScore, instructions }
 /// While [screen] is [AppScreen.game], the game's own phase (ready, playing,
 /// paused, crashed) decides the overlay.
 class AppFlow extends ChangeNotifier {
-  AppFlow({required this.game, this.onExit, this.onOnlineScores});
+  AppFlow({
+    required this.game,
+    this.soundOn = true,
+    this.onExit,
+    this.onOnlineScores,
+    this.onSoundChanged,
+    this.onKeyClick,
+  });
 
   final HelicopterGame game;
 
@@ -19,13 +26,19 @@ class AppFlow extends ChangeNotifier {
   /// Opens the platform leaderboard (wired in M5).
   final VoidCallback? onOnlineScores;
 
+  /// Sound setting changed (audio + persistence).
+  final void Function(bool soundOn)? onSoundChanged;
+
+  /// A menu key was activated (key-click sound).
+  final VoidCallback? onKeyClick;
+
   AppScreen _screen = AppScreen.title;
   AppScreen get screen => _screen;
 
-  /// In-memory for now; persisted with the audio service in M4.
-  bool soundOn = true;
+  bool soundOn;
 
   void _go(AppScreen next) {
+    onKeyClick?.call();
     game.releaseAll();
     _screen = next;
     notifyListeners();
@@ -52,6 +65,8 @@ class AppFlow extends ChangeNotifier {
 
   void toggleSound() {
     soundOn = !soundOn;
+    onSoundChanged?.call(soundOn);
+    if (soundOn) onKeyClick?.call();
     notifyListeners();
   }
 
