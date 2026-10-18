@@ -64,7 +64,7 @@ packages/
 
 ## Shared UX
 
-- **Launcher** (canvas board 1): header `Games` + counter `2/4`; 2×2 tiles (180×325 virtual px, 1-LCD-px border), each with its 12×12 icon drawn at 2 LCD px and its name; the selected tile is inverted; soft key `Select`. Tapping a tile selects and opens it. Back on the launcher exits the app (Android).
+- **Launcher** (canvas board 1): header `Games` + counter `2/4`; 2×2 tiles (190×325 virtual px at x 5 and 205, 1-LCD-px border; the 180-px inner width fits six letters, so tile names are at most 6 letters), each with its 12×12 icon drawn at 2 LCD px and its name; the selected tile is inverted; soft key `Select`. Tapping a tile selects and opens it. Back on the launcher exits the app (Android).
 - **Game menu** (board 2), same parts as Cave Copter's menus: `New game`, `Level: N` (Snake, Blocks; 1–9, tap cycles), `Top score`, `Sound: On/Off`, `Instructions`, `All games`. Back = `All games`.
 - **In game**: HUD on top (score left, `HI` best right, 5 digits, 1-px rule), no buttons; pause on back / app background with the pause menu (`Continue`, `New game`, `Sound`, `Main menu`); game over dialog with `New best!` and `Tap to play`; crash = 3 inverted flashes.
 - **Sound**: one app-wide setting; each game adds its own square-wave effects to the shared synth script.

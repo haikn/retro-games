@@ -1,0 +1,12 @@
+# Dart pub workspace: run `flutter pub get` here once for all packages.
+name: retro_games_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+workspace:
+  - app
+  - packages/arcade_core
+  - packages/lcd_kit
+  - packages/games/copter

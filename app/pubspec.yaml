@@ -1,0 +1,42 @@
+name: lcd_arcade
+description: "LCD Arcade (working name): four retro LCD games in one app."
+publish_to: none
+version: 1.0.0+1
+resolution: workspace
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  lcd_kit:
+  copter:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  image: ^4.12.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
+
+flutter:
+  uses-material-design: true
+
+# dart run flutter_launcher_icons   (source art: dart run tool/gen_icon.dart)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  remove_alpha_ios: true
+  adaptive_icon_background: "#C7F0D8"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+  min_sdk_android: 21
+
+# dart run flutter_native_splash:create   (plain LCD colour, no image)
+flutter_native_splash:
+  color: "#C7F0D8"
+  android_12:
+    color: "#C7F0D8"
+  fullscreen: true

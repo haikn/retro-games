@@ -6,3 +6,10 @@
 Thumbs.db
 .idea/
 .vscode/
+
+# Dart / Flutter (workspace-wide; app/.gitignore covers the platform folders)
+.dart_tool/
+build/
+*.iml
+.flutter-plugins-dependencies
+xcuserdata/
