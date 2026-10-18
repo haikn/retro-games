@@ -177,7 +177,7 @@ All values are in virtual pixels (px) and seconds, in the 800×400 virtual resol
 
 ### Collision
 
-- Axis-aligned bounding box (AABB). Helicopter sprite 50 × 30 px (10 × 6 LCD pixels); hitbox 40 × 20 px, inset exactly 1 LCD px on every side. The hitbox is smaller than the sprite because the sprite's edges (rotor tips, tail fin, skid) are mostly empty pixels.
+- Axis-aligned bounding box (AABB). Helicopter sprite 50 × 30 px (10 × 6 LCD pixels); hitbox 40 × 20 px, inset exactly 1 LCD px on every side. The rotor row, the skid row, the tail fin and the nose tip lie outside the hitbox, so grazing a wall with them by 1 LCD px is deliberately forgiven.
 - Cave and obstacle geometry is grid-aligned, so what you see is what collides for walls and blocks. The helicopter's y is continuous and drawn floored to the grid, so its drawn position can lag its hitbox by up to 1 LCD px (5 px); the 1-LCD-px hitbox inset absorbs this.
 - Tested against the ceiling/floor columns overlapping the helicopter's x-range and against obstacle blocks.
 - Leaving the top or bottom of the play area counts as a crash (defensive; the cave normally covers these).

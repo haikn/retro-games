@@ -14,3 +14,13 @@ import UIKit
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
   }
 }
+
+/// Root view controller (set in Main.storyboard). Defers the system edge
+/// gestures so holding near a screen edge flies instead of triggering the
+/// home indicator or Control Center on the first swipe, and hides the
+/// home indicator and status bar.
+class GameViewController: FlutterViewController {
+  override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .all }
+  override var prefersHomeIndicatorAutoHidden: Bool { true }
+  override var prefersStatusBarHidden: Bool { true }
+}
