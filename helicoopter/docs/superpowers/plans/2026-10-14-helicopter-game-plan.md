@@ -1,10 +1,10 @@
 # Helicopter Game (Mobile) — Development Plan
 
-Date: 2026-10-14 · Spec: [2026-10-14-helicopter-game-design.md](../specs/2026-10-14-helicopter-game-design.md) (rev 1.2 — retro LCD art direction)
+Date: 2026-10-14 · Spec: [2026-10-14-helicopter-game-design.md](../specs/2026-10-14-helicopter-game-design.md) (rev 1.3 — retro phone-game UI redesign) · UI: [design canvas](https://claude.ai/artifact/BZmh5D8PVzgqnXemYQszzm)
 
 ## Approach
 
-- **Walking skeleton first.** The riskiest parts are not the game; they are the iOS build without a Mac, Game Center entitlements, and Play's release gates. A blank app is shipped to TestFlight and a Play internal track in week 1, before gameplay work.
+- **Walking skeleton first.** The riskiest parts are not the game; they are iOS signing and Game Center entitlements, and Play's release gates. A blank app is shipped to TestFlight and a Play internal track in week 1, before gameplay work.
 - **Core before pixels.** `lib/core/` is built test-first as pure Dart. Rendering is added only when the headless simulation passes its tests, including the passability and frame-rate-independence tests.
 - **Playable on device early.** From M2 onward, every milestone ends with a build on the reference Android device.
 - **Tune with data, not guesses.** All tuning constants live in `config.dart`; a debug overlay shows FPS, sim steps per frame, and the reachable band.
@@ -52,7 +52,7 @@ Goal: an empty Flutter app, landscape-locked, builds and installs from CI on bot
 | 0.2 | Enroll Apple Developer Program and Google Play Console (start day 1: approval can take days) | Accounts active |
 | 0.3 | `flutter create --org <reverse-domain> --platforms android,ios,windows helicoopter`; `git init`; `.gitignore` incl. keystores, `key.properties`, API keys | Repo with first commit |
 | 0.4 | Add dependencies (flame, flame_audio, games_services, shared_preferences), dev deps (flutter_lints or very_good_analysis, integration_test); pin versions | `flutter pub get` clean; `flutter analyze` 0 issues |
-| 0.5 | `main.dart`: landscape lock (both directions), immersive sticky fullscreen, placeholder screen in the `lcd` colour | Runs on Android device and Windows |
+| 0.5 | `main.dart`: landscape lock (both directions), immersive sticky fullscreen, placeholder screen in the `lcd` colour | Runs on Android device, iOS simulator and macOS |
 | 0.6 | Android release signing: generate upload keystore, `key.properties` (git-ignored), enable Play App Signing; set `applicationId`, `minSdk`, target SDK per Play requirement | `flutter build appbundle --release` succeeds locally |
 | 0.7 | iOS: set bundle id, display name, `UISupportedInterfaceOrientations` = landscape only, `UIRequiresFullScreen`; add `Runner.entitlements` with `com.apple.developer.game-center` and wire it in `project.pbxproj` | Diff committed |
 | 0.8 | App Store Connect: create app record, App Store Connect API key, enable Game Center | API key stored in CI secrets |
@@ -114,9 +114,9 @@ class FixedStepper {
 | 1.3 | `physics.dart` (semi-implicit Euler, clamp) | Rises while held, falls when released, clamps at ±360 px/s, exact values after N ticks |
 | 1.4 | `collision.dart` (AABB vs columns overlapping heli x-range, vs obstacles, play-area bounds) | Exact touch = hit, 1 px gap = no hit, fully inside, out-of-bounds top/bottom |
 | 1.5 | `world_state.dart` with `ColumnRing` and `ObstaclePool` | Ring wraps correctly; pool reuse without allocation |
-| 1.6 | `cave_generator.dart`: random walk, linear gap shrink, obstacle spawning with grace period and interval curve | Same seed ⇒ same columns/obstacles; gap ≥ 150 everywhere; first obstacle after 2 s; interval never < 300 px |
-| 1.7 | Reachable-band tracking in the generator (interval set, expand by `climbMargin`, intersect with free space, reject/re-roll) | **Passability property test**: 1 000 seeds × 10 000 columns, band never empty, every obstacle leaves a ≥ 70 px window; all geometry is a multiple of 5 px (LCD-grid aligned) |
-| 1.8 | `simulation.dart`: tick orchestration per spec data flow, returns `SimEvent` | Holding forever ⇒ crash into ceiling; releasing forever ⇒ crash into floor; distance increases 4 px/tick |
+| 1.6 | `cave_generator.dart`: random walk, linear gap shrink, obstacle spawning with grace period and interval curve | Same seed ⇒ same columns/obstacles; gap ≥ 170 everywhere; first obstacle after 2 s; interval never < 300 px |
+| 1.7 | Reachable-band tracking in the generator (interval set, expand by `climbMargin`, intersect with free space, reject/re-roll) | **Passability property test**: 1 000 seeds × 10 000 columns, band never empty, every obstacle leaves a ≥ 80 px window; all geometry is a multiple of 5 px (LCD-grid aligned) |
+| 1.8 | `simulation.dart`: tick orchestration per spec data flow, returns `SimEvent` | Holding forever ⇒ crash into ceiling; releasing forever ⇒ crash into floor; distance increases 5 px/tick |
 | 1.9 | `FixedStepper` | Same input timeline at 30 / 60 / 120 / jittery frame deltas ⇒ identical crash tick and distance; 1 s frame delta ⇒ capped steps |
 | 1.10 | Optional: `test/core/bot_test.dart` — a simple look-ahead bot (aim for band center) survives ≥ 5 000 distance on 100 seeds | Sanity check that the band model matches real physics |
 
@@ -149,15 +149,15 @@ Exit criteria: 2-minute play session on the reference Android device without vis
 
 | # | Task | Acceptance |
 |---|---|---|
-| 3.1 | State machine in `HelicopterGame`: `title / playing / paused / crashed` with transitions exactly as in the spec diagram | Unit test drives transitions with fake inputs |
+| 3.1 | `AppFlow` + game phases: `title / menu / ready / playing / paused / crashed / topScore / instructions` with transitions exactly as in the spec diagram | Unit test drives transitions with fake inputs |
 | 3.2 | Start press counts as thrust; restart requires a new press ≥ 600 ms after crash | Widget test: held finger at crash does not restart; new press at 599 ms ignored, at 600 ms accepted |
-| 3.3 | `HudComponent`: 1-pixel separator line, `DIST 0000` / `BEST 0000` in the bottom strip, soft-key labels (`SCORES`, `SOUND: ON/OFF`) on title/game over; inset by safe-area padding (passed from Flutter `MediaQuery` into the game) | Not clipped on a notched device in either landscape direction |
-| 3.4 | Screens drawn in the LCD style (pixel font on the grid, 1-pixel bordered boxes): title (name, blinking `PRESS AND HOLD TO FLY`), paused (`TAP TO RESUME`, resumes on release), game over (`GAME OVER`, distance, blinking `NEW BEST!`, `TAP TO PLAY`). Soft-key hit areas ≥ 48 × 48 dp are transparent Flutter widgets over the labels | Soft keys do not trigger flight (widget test); all text sits on the LCD grid |
+| 3.3 | `HudComponent`: top strip `00123` / `HI 00456` with 1-pixel rule below; inset by safe-area padding (passed from Flutter `MediaQuery` into the game) | Not clipped on a notched device in either landscape direction |
+| 3.4 | LCD widget kit in 800×400 virtual px (`LcdViewport`, `LcdText`, `MenuList` with inverted selection + counter, `Scrollbar`, `SoftKey`, `LcdDialog`) and the screens from spec 1.3: title splash, main menu, ready, paused menu, game over, top score, instructions | Matches the design canvas; rows/soft keys ≥ 48 dp; menus do not trigger flight (widget test); all text sits on the LCD grid |
 | 3.5 | Lifecycle: `WidgetsBindingObserver` → `paused` on inactive/paused during play | Notification shade, incoming call, app switch all pause cleanly; resume has no step burst |
-| 3.6 | Android back button via `PopScope`: title → exit, playing → pause, paused/crashed → title | |
+| 3.6 | Android back button via `PopScope`, routed by `AppFlow` per spec 1.3 (title/menu → exit; playing → paused; paused → ready; others → menu) | Widget test per screen |
 | 3.7 | Title screen background: static cave strip with hovering helicopter (bobbing 1 LCD pixel) | |
 
-Exit criteria: full loop title → play → crash → restart → background → resume works on Android device. **Upload this build to the Play closed testing track and start the 14-day clock** (if D2 = personal account).
+Exit criteria: full loop title → menu → ready → play → crash → restart → background → pause menu → continue works on Android device. **Upload this build to the Play closed testing track and start the 14-day clock** (if D2 = personal account).
 
 ---
 
@@ -168,7 +168,7 @@ Exit criteria: full loop title → play → crash → restart → background →
 | 4.1 | `tool/gen_audio.dart`: synthesize square-wave "phone buzzer" sounds into 16-bit mono WAV: low rotor pulse loop (seamless), descending crash beeps, 3-note new-best jingle, soft-key click; commit outputs | Loop has no audible click; sounds read as one monophonic set |
 | 4.2 | `AudioService`: preload, rotor loop start/stop, crash SFX, mute, ambient audio session (iOS), failure ⇒ muted | Background music from another app keeps playing; silent switch respected |
 | 4.3 | `LocalStore`: best score, pending leaderboard score, mute; read failure ⇒ defaults | Unit tests with mocked `SharedPreferences` |
-| 4.4 | Wire best-score update on crash, mute toggle on title | Values survive app restart |
+| 4.4 | Wire best-score update on crash, `Sound: On/Off` rows in main and pause menus | Values survive app restart |
 | 4.5 | Bundle OFL pixel font (Silkscreen or Pixelify Sans) + register license via `LicenseRegistry`; size it so cap height = 5 LCD pixels | Same look on Android and iOS; glyph edges land on the grid |
 | 4.6 | App icon and splash: tool script renders the 1-bit helicopter in `ink` on an `lcd` square with hard pixel edges; generate launcher icons (flutter_launcher_icons) and a native splash in the `lcd` colour | No white flash on launch; icon legible at 48 px |
 
@@ -178,10 +178,10 @@ Exit criteria: full loop title → play → crash → restart → background →
 
 | # | Task | Acceptance |
 |---|---|---|
-| 5.1 | `LeaderboardService` interface (`signIn`, `submit(score)`, `show()`), `GamesServicesLeaderboard`, `NoopLeaderboard` (Windows/tests) | All methods return results, never throw |
+| 5.1 | `LeaderboardService` interface (`signIn`, `submit(score)`, `show()`), `GamesServicesLeaderboard`, `NoopLeaderboard` (desktop/tests) | All methods return results, never throw |
 | 5.2 | Play Console: Play Games Services project, leaderboard, OAuth credentials for **both** the upload key SHA-1 and the Play App Signing SHA-1; tamper limit | Sign-in works on internal-track build (not only debug) |
 | 5.3 | App Store Connect: Game Center leaderboard, tamper limits | |
-| 5.4 | Sign-in once at launch on title; `SCORES` soft key retries sign-in then shows board; non-blocking message on failure | |
+| 5.4 | Sign-in once at launch on title; `Online scores` on the Top score screen retries sign-in then shows board; non-blocking message on failure | |
 | 5.5 | Submit on new best; on failure persist pending score; retry after next successful sign-in | Unit tests for success, failure, offline-then-online |
 | 5.6 | Verify on TestFlight (Game Center sandbox) and Play internal track | Scores visible on both boards |
 
@@ -227,7 +227,7 @@ Exit criteria: full loop title → play → crash → restart → background →
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| iOS signing / Game Center entitlement fails without a Mac | Medium | High | Walking skeleton in M0; Codemagic automatic signing; rent a cloud Mac session (e.g. MacinCloud) for one-off debugging if blocked |
+| iOS signing / Game Center entitlement problems | Low–Medium | High | Walking skeleton in M0; local Xcode automatic signing on the dev Mac |
 | Play 12-tester / 14-day closed test delays launch | High (personal account) | High | Organization account (D2), or start closed test at end of M3 with any playable build |
 | `games_services` breaks with a store SDK update | Low–Medium | Medium | Interface + `NoopLeaderboard`; pin version; fallback to own platform channels |
 | Generator produces unfair sections the band model misses | Medium | High | Conservative 50% `climbMargin`; bot test (1.10); debug band overlay during playtests |

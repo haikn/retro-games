@@ -1,5 +1,7 @@
 # Helicopter Game Implementation Plan
 
+> **SUPERSEDED (2026-10-18).** This task-by-task plan was written against spec rev 1.0/1.1 and a Windows machine. Its code, constants, visuals and screens no longer match spec rev 1.3. Implementation follows the [spec](../specs/2026-10-14-helicopter-game-design.md) and the [milestone plan](2026-10-14-helicopter-game-plan.md). Kept for history only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a faithful mobile remake of the classic Flash Helicopter Game for iOS and Android with local best score, online leaderboards, and sound.

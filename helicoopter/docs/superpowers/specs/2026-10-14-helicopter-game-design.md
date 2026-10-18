@@ -1,6 +1,8 @@
 # Helicopter Game (Mobile) — Design Spec
 
-Date: 2026-10-14 · Revision: 1.2 (retro LCD art direction, see [Change Log](#change-log))
+Date: 2026-10-14 · Revision: 1.3 (retro phone-game UI redesign, see [Change Log](#change-log))
+
+UI reference: [Cave Copter LCD UI design canvas](https://claude.ai/artifact/BZmh5D8PVzgqnXemYQszzm) (title, menus, playable gameplay, game over, UI kit). Where this spec and the canvas differ, this spec wins.
 
 ## Goal
 
@@ -26,10 +28,10 @@ Success criteria for v1:
 
 | # | Decision | Recommendation | Why it matters |
 |---|---|---|---|
-| D1 | Store name and branding | A distinct name (e.g. "Cave Copter"), not "Helicopter Game"; no "Nokia" name, logo, phone image or Nokia font in the app or store listing | The original name/brand belongs to a third party, and so does Nokia's; a lookalike name risks store rejection (Apple 4.1 copycats) or takedown. Gameplay mechanics and a generic "monochrome LCD" style are not protected; names, logos and assets can be. Describe the style as "retro LCD" or "classic phone style". |
+| D1 | Store name and branding | A distinct name. **Working name: "Cave Copter"** (used in code and UI until D1 is closed); package `cave_copter`, app id `com.nhk.cave_copter` (iOS `com.nhk.caveCopter`). Not "Helicopter Game"; no "Nokia" name, logo, phone image or Nokia font in the app or store listing | The original name/brand belongs to a third party, and so does Nokia's; a lookalike name risks store rejection (Apple 4.1 copycats) or takedown. Gameplay mechanics and a generic "monochrome LCD" style are not protected; names, logos and assets can be. Describe the style as "retro LCD" or "classic phone style". |
 | D2 | Google Play account type | Organization account if available (needs D-U-N-S) | New *personal* Play accounts must run a closed test with ≥ 12 opted-in testers for 14 consecutive days before production access. This is a hard schedule item. |
 | D3 | Target age group | 13+ | Declaring under-13 audiences brings Families policy / Kids Category requirements. |
-| D4 | iOS CI provider | Codemagic | Handles code signing from the App Store Connect API key without a Mac; GitHub-hosted macOS minutes are billed at 10× on private repos. |
+| D4 | iOS build path | Local Xcode for development and TestFlight uploads; Codemagic optional for tag-triggered releases | The primary dev machine is now a Mac with Xcode, so cloud signing is no longer required. GitHub-hosted macOS minutes are billed at 10× on private repos. |
 
 ## Tech Stack
 
@@ -40,7 +42,7 @@ Success criteria for v1:
 | Audio | flame_audio (audioplayers), audio session configured as *ambient* |
 | Leaderboards | games_services (Game Center + Play Games Services v2) behind an interface |
 | Local storage | shared_preferences |
-| Font | Bundled OFL-licensed small pixel font with a phone-LCD feel (e.g. Silkscreen or Pixelify Sans), rendered on the LCD grid |
+| Font | Bundled **Silkscreen** (OFL), regular + bold, rendered on the LCD grid |
 | Tests | flutter_test (unit + widget), integration_test (on-device smoke) |
 | Lints | flutter_lints (or very_good_analysis), zero warnings in CI |
 
@@ -50,13 +52,13 @@ Dependency risk: `games_services` is a community plugin. It is wrapped behind `L
 
 ## Development Environment & Build
 
-- Primary dev machine: Windows.
-  - Flutter SDK, Android Studio (Android SDK + emulator), VS Code with Flutter/Dart extensions.
-  - Day-to-day iteration on a USB Android device (preferred for feel and frame timing) or emulator; Windows desktop target allowed for quick checks (leaderboard is a no-op there).
-- Android: built, signed, and published to Google Play from Windows. Upload key stored outside the repo; Play App Signing enabled. Target SDK must meet Play's current target API level requirement; native libs must support 16 KB page sizes (handled by a current Flutter release).
-- iOS: built in the cloud on macOS runners (Codemagic, see D4), signed with an App Store Connect API key, uploaded to TestFlight. No local Mac required. Game Center capability is added by committing the `Runner.entitlements` file and the corresponding `project.pbxproj` change (done once, verified by the first CI build).
+- Primary dev machine: macOS (Apple Silicon) with Xcode.
+  - Flutter SDK, Android Studio (Android SDK + emulator, bundled JDK 17+), VS Code with Flutter/Dart extensions.
+  - Day-to-day iteration on a USB Android device or iPhone (preferred for feel and frame timing) or simulators; macOS desktop target allowed for quick checks (leaderboard is a no-op there).
+- Android: built, signed, and published to Google Play from the Mac. Upload key stored outside the repo; Play App Signing enabled. Target SDK must meet Play's current target API level requirement; native libs must support 16 KB page sizes (handled by a current Flutter release).
+- iOS: built and signed locally in Xcode (automatic signing), uploaded to TestFlight; optionally Codemagic on tags (see D4). Game Center capability is added via `Runner.entitlements` and the corresponding `project.pbxproj` change.
 - Prerequisites: Apple Developer Program account, Google Play Console account, a physical iPhone for TestFlight playtesting, a low-end reference Android device.
-- Source control: git repository; CI runs `flutter analyze`, `flutter test`, and an Android release build on every push; the iOS build and TestFlight upload run on tagged releases.
+- Source control: the `retro-games` monorepo; the Flutter project lives in `helicoopter/`, so CI jobs set `working-directory: helicoopter`. CI runs `flutter analyze`, `flutter test`, and an Android release build on every push; the iOS build and TestFlight upload run on tagged releases.
 - Secrets (keystore, App Store Connect API key, Play service account JSON) live only in CI secret storage and a local password manager, never in git.
 
 ## Gameplay
@@ -78,27 +80,52 @@ An alternative palette for a more strictly black-and-white look (`#E0E6D8` / `#1
 
 **LCD grid.** The 800×400 virtual screen is drawn as a grid of **160 × 80 LCD pixels**, each 5 × 5 virtual px. Every element is drawn as whole LCD pixels; nothing is drawn between grid cells. The large, visible pixels are the core of the look.
 
-- Play area: 160 × 74 LCD pixels (370 virtual px). HUD strip: bottom 6 LCD rows (30 virtual px), separated from the play area by a 1-LCD-pixel `ink` line, as in the classic Snake score bar.
+- HUD strip: **top** 8 LCD rows (40 virtual px), then a 1-LCD-pixel `ink` rule (row 8), as in the Snake / Space Impact score bar. Play area: rows 9–79 = 160 × 71 LCD pixels (y 45–400, 355 virtual px).
 - Cave ceiling and floor: solid `ink` columns, 2 LCD pixels wide (10 virtual px), giving the blocky, jagged edge.
-- Obstacle blocks: solid `ink` rectangles, 4 LCD pixels wide.
-- Helicopter: 8 × 4 LCD-pixel sprite (40 × 20 virtual px), 1-bit, 2-frame rotor animation (rotor flips between a long and a short bar at ~8 fps), fixed at 20% of screen width; the world scrolls right to left.
-- Smoke: single `ink` LCD pixels (or 2×2 hollow squares) emitted behind the tail, drifting left, "fading" by blinking out (switching off at random over ~0.5 s) instead of alpha.
-- Crash: 1-bit pixel debris burst plus the whole screen **inverting** (ink ↔ lcd) for 3 flashes over ~0.4 s, then the world freezes and the prompt appears.
+- Obstacle blocks: solid `ink` rectangles, 4 LCD pixels wide (20 px), 10–18 LCD pixels tall (50–90 px).
+- Helicopter: **10 × 6** LCD-pixel sprite (50 × 30 virtual px), 1-bit, facing right, at x = 160 px (20% of screen width); the world scrolls right to left. Rotor row flips between a long and a short bar every 8 ticks (~7.5 fps). Sprite (`#` = ink):
+
+  ```
+  frame A  .########.      frame B  ...####...
+           ......#...               (body rows identical)
+           #...#####.
+           #######.##
+           #...#####.
+           ...######.
+  ```
+- Smoke: single `ink` LCD pixels emitted every 4 ticks behind the tail (one pixel left of the sprite, row 3 of the sprite), drifting left with the world, living 16–30 ticks and blinking at random during their last 6 ticks instead of fading with alpha.
+- Crash: the helicopter disappears, 12 single-pixel debris bits fly out with gravity for ~1.1 s, and the whole screen **inverts** (ink ↔ lcd) 3 times (ticks 0–4, 10–14, 20–24). The game-over box appears at tick 40.
 - LCD ghosting (optional, on by default): pixels that switch off fade out over ~60 ms, mimicking a slow LCD. This is the only place a third tone appears, and it is drawn only as a fading `ink` pixel.
 - Motion: positions are snapped to the LCD grid when drawn, so the cave moves in visible 1-pixel steps, like the original phones. The simulation itself stays continuous (see Physics).
 
 **Text and HUD.**
 
-- Bundled OFL pixel font, drawn in `ink`, sized to sit on the LCD grid (cap height 5 LCD pixels).
-- HUD: `DIST 0000` on the left, `BEST 0000` on the right, zero-padded to 4+ digits, Snake-style.
-- Text is upper case throughout.
+- Font: Silkscreen, drawn in `ink`. Two sizes only, chosen so font pixels land exactly on LCD pixels: **body 40 px** (1 font px = 1 LCD px, caps 5 LCD px tall) and **title 80 px bold** (1 font px = 2 LCD px). The large top-score number on the Top score screen uses 120 px bold.
+- Copy is sentence case, as on the original phones (`New game`, `Game over!`); Silkscreen renders lower case as small caps. The title logo is upper case (`CAVE COPTER`).
+- HUD during play: score left (`00123`), best right (`HI 00456`), both zero-padded to 5 digits, vertically centred in the 40 px strip with 25 px side margins.
 
-**Screens (phone-menu style).** On the title and game-over screens the HUD strip shows the soft keys; during play it shows `DIST` / `BEST`.
+**Screens (phone-menu style).** Every screen except gameplay is a Nokia-style screen made of the same parts:
 
-- Title: game name in large pixel letters, a small pixel helicopter hovering over a static cave strip, `PRESS AND HOLD TO FLY` blinking below it.
-- Menu buttons are drawn as **soft-key labels** in the bottom corners of the HUD strip, as on old phones: left `SCORES` (leaderboard), right `SOUND: ON/OFF`. Each has a touch target of at least 48 × 48 dp even though the label is small.
-- Paused: centred box with a 1-pixel `ink` border containing `PAUSED` and `TAP TO RESUME`.
-- Game over: centred bordered box with `GAME OVER`, `DIST 1234`, `NEW BEST!` (blinking, only when applicable), and `TAP TO PLAY`.
+| Part | Spec |
+|---|---|
+| Header | Screen title at top-left (x 25, 55 px tall); optional right-aligned value (menu item counter `1/4`, or the paused run's distance) |
+| Menu list | Rows 60 px (12 LCD px) tall starting at y 55, text inset 15 px, list x 10–755. The selected row is **inverted** (ink bar, lcd text) |
+| Scrollbar | Right edge: 1-LCD-px track at x 775, 3 × 12 LCD-px thumb at x 770 whose position follows the selection / scroll position |
+| Soft key | One centred label at the bottom (y 345–400, 250 px wide), like the middle soft key on old phones: `Select`, `Back` or `Menu`. Over the cave it is drawn on an `lcd` plate so it stays legible |
+| Dialog | 1-LCD-px `ink` border on `lcd`, centred text rows 50 px apart |
+
+Screens:
+
+- **Title splash** (cold start): `CAVE COPTER` in title type, the helicopter bobbing 1 LCD px over a static cave strip with a short smoke trail, `Tap to start` blinking (1 s period). Any tap opens the main menu.
+- **Main menu**: header `Cave Copter` + counter; items `New game`, `Top score`, `Sound: On/Off`, `Instructions`; soft key `Select`.
+- **Ready** (after `New game`, and after `Continue`): the cave and helicopter are visible, a dialog shows `Hold to fly` blinking, soft key `Menu`. The first press starts (or resumes) the run and already counts as thrust.
+- **Gameplay**: HUD + play area only; no buttons. Tapping anywhere flies.
+- **Paused** (back button or app backgrounded): header `Paused` + current distance; items `Continue`, `New game`, `Sound: On/Off`, `Main menu`; soft key `Select`.
+- **Game over**: the frozen frame stays visible behind a dialog: `Game over!` (bold), `Dist 01234`, then `New best!` blinking if applicable (otherwise `Best 01234`), then `Tap to play`; soft key `Menu`.
+- **Top score**: header `Top score:`, the local best in 120 px bold, `On this phone`, an inverted `Online scores` button (opens the platform leaderboard), soft key `Back`.
+- **Instructions**: header `Instructions`, body text that scrolls (scrollbar follows), soft key `Back`.
+
+Touch: tapping a menu row selects **and** activates it (the inverted bar shows on press, so the user sees which row fired); the soft key activates the current selection. Every row and soft key has a touch target of at least 48 × 48 dp at the smallest supported scale. Menus, dialogs and soft keys never register as flight input.
 
 **Assets.** All sprites are drawn procedurally as 1-bit pixel grids, and sound effects are synthesized into WAV files by a script, so no third-party art or audio is needed. The only third-party asset is the OFL font (license file shipped in-app via `LicenseRegistry`). Nothing resembling a real phone, logo or brand is drawn.
 
@@ -107,10 +134,10 @@ An alternative palette for a more strictly black-and-white look (`#E0E6D8` / `#1
 - Press and hold anywhere on screen: thrust up. Release: fall.
 - "Holding" means at least one pointer is down (pointer count > 0); extra fingers have no further effect.
 - No on-screen buttons during play.
-- The first press on the title screen starts the run, and that press already counts as holding (thrust begins immediately).
-- After a crash, a restart requires a **new** press that begins at least 600 ms after the crash. A finger still held from the crash never restarts the game.
+- The first press on the Ready screen starts the run, and that press already counts as holding (thrust begins immediately).
+- After a crash, a restart requires a **new** press that begins at least 600 ms after the crash. A finger still held from the crash never restarts the game. A restart goes straight into a new run (classic behaviour), not via Ready.
 - System gestures: immersive sticky fullscreen on Android; on iOS the home indicator is auto-hidden and edge gestures are deferred (native `preferredScreenEdgesDeferringSystemGestures` override in the iOS runner) so holding near an edge does not trigger the system.
-- Android back button: on title exits the app; during play pauses; on pause/crash returns to title.
+- Android back button: title splash and main menu exit the app; Ready, game over, Top score and Instructions return to the main menu; gameplay opens Paused; Paused continues the run (via Ready), like the original phones' back key.
 
 ### Physics
 
@@ -121,7 +148,7 @@ All values are in virtual pixels (px) and seconds, in the 800×400 virtual resol
 | Gravity | 900 px/s² |
 | Thrust (while held) | 1 800 px/s² upward (net 900 px/s² up) |
 | Max vertical speed (both directions) | 360 px/s |
-| Scroll speed | 240 px/s, constant for the whole run |
+| Scroll speed | **300 px/s** (exactly 1 LCD px per 60 Hz tick), constant for the whole run |
 | Simulation rate | 60 Hz fixed (dt = 1/60 s) |
 
 - Vertical velocity integrates gravity (always) and thrust (while held) using semi-implicit Euler, giving a smooth curve, not instant movement.
@@ -129,34 +156,36 @@ All values are in virtual pixels (px) and seconds, in the 800×400 virtual resol
 - Fixed 60 Hz timestep with an accumulator so feel is identical regardless of frame rate:
   - Frame delta is clamped to 100 ms (prevents a "spiral of death" after hitches or resume).
   - At most 6 simulation steps per frame.
-  - Rendering interpolates helicopter y and scroll offset between the previous and current simulation state (`alpha = accumulator / dt`). This is required for smooth motion on 90/120 Hz displays.
-- Anti-tunnelling invariant: per-tick displacement (4 px horizontal, ≤ 6 px vertical) is smaller than the thinnest collidable feature (column width 10 px, obstacle min size 20 px). `config.dart` asserts this.
+  - Rendering interpolates helicopter y between the previous and current simulation state (`alpha = accumulator / dt`) before snapping to the LCD grid.
+- Rendering interpolates only the helicopter's y. The world scrolls exactly 1 LCD px per tick, so scroll needs no interpolation and moves in perfectly even steps on 60 Hz screens (on 120 Hz each step is held for exactly 2 frames).
+- Anti-tunnelling invariant: per-tick displacement (5 px horizontal, ≤ 6 px vertical) is smaller than the thinnest collidable feature (column width 10 px, obstacle min size 20 px). `config.dart` asserts this.
 
 ### Level Generation
 
-- Geometry: the play area is 800 × 370 px (bottom 30 px reserved for the HUD). The cave is a sequence of columns 10 px wide; each column has a ceiling height and a floor height. Columns live in a ring buffer (visible count + 2).
+- Geometry: the play area is 800 × 355 px (y 45–400; the top 45 px are HUD + rule). The cave is a sequence of columns 10 px wide; each column has a ceiling height and a floor height. Columns live in a ring buffer (visible count + 2). The tunnel centre is kept at least 10 px (2 LCD px) inside the play area, so the ceiling and floor are always at least 2 LCD px thick.
 - **Grid alignment:** all generated geometry (ceiling/floor heights, obstacle positions and sizes) is a multiple of 5 px, so it maps exactly onto LCD pixels and what you see is exactly what collides.
 - Procedural, driven by a seeded RNG (new seed per run, deterministic for a given seed). The RNG is a small in-repo PRNG (e.g. xorshift128+ or PCG32), not `dart:math` `Random`, so sequences stay stable across Dart SDK versions.
 - Tunnel center follows a bounded random walk column by column: step of −5, 0 or +5 px (one LCD row) per column, center kept within the play area margins.
-- Tunnel gap starts at 300 px and shrinks linearly (rounded to 5 px) to a minimum of 160 px, reached at distance 2 000.
-- Obstacles: `ink` blocks 20 px wide (2 columns) × 50–90 px tall (multiples of 5). First obstacle after a 2 s grace period. Spawn interval starts at 600 px of scroll and decreases linearly to a minimum of 300 px.
+- Tunnel gap starts at 300 px and shrinks linearly (rounded to 5 px) to a minimum of 170 px, reached at distance 2 000 (20 000 px scrolled, ≈ 67 s).
+- Obstacles: `ink` blocks 20 px wide (2 columns) × 50–90 px tall (multiples of 10). First obstacle after a 2 s grace period (600 px). Spawn interval starts at 600 px of scroll and decreases linearly to a minimum of 300 px. While an obstacle spans its two columns, the tunnel centre does not walk, so the free window is the same in both columns.
 - **Passability is guaranteed by construction.** The generator tracks the *reachable band* (the set of y positions the helicopter hitbox can occupy) column by column:
   - From one column to the next, the band can expand by at most `climbMargin = 0.5 × maxVerticalSpeed × columnTime` up and down (a conservative 50% of the theoretical limit to account for acceleration).
   - The band is then intersected with the column's free space (gap minus obstacle, minus hitbox height). Where an obstacle splits the gap, the band becomes up to two intervals.
-  - An obstacle placement (or random-walk step) is rejected and re-rolled (bounded retries, then skipped) if it would make the band empty, or leave no free window (wall-to-obstacle space, before subtracting the hitbox) of at least `minPassableHeight` = 70 px (5× hitbox height).
-  - With the default constants: random-walk step 5 px < `climbMargin` ≈ 7.5 px per column, and min gap 160 px − max obstacle 90 px = 70 px, so a valid placement always exists.
+  - An obstacle placement (or random-walk step) is rejected and re-rolled (bounded retries, then skipped) if it would make the band empty, or leave no free window (wall-to-obstacle space, before subtracting the hitbox) of at least `minPassableHeight` = 80 px (4× hitbox height).
+  - With the default constants: column time = 10 / 300 s, so `climbMargin` = 6 px per column > random-walk step 5 px; and min gap 170 px − max obstacle 90 px = 80 px, so a valid placement always exists.
 - Smoke and explosion effects use a separate cosmetic RNG so they never affect the level sequence.
 
 ### Collision
 
-- Axis-aligned bounding box (AABB). Helicopter sprite 40 × 20 px (8 × 4 LCD pixels); hitbox 30 × 14 px, centered. The hitbox is slightly smaller than the sprite because the sprite's corners (rotor tips, tail) are mostly empty pixels.
+- Axis-aligned bounding box (AABB). Helicopter sprite 50 × 30 px (10 × 6 LCD pixels); hitbox 40 × 20 px, inset exactly 1 LCD px on every side. The hitbox is smaller than the sprite because the sprite's edges (rotor tips, tail fin, skid) are mostly empty pixels.
+- Cave and obstacle geometry is grid-aligned, so what you see is what collides for walls and blocks. The helicopter's y is continuous and drawn floored to the grid, so its drawn position can lag its hitbox by up to 1 LCD px (5 px); the 1-LCD-px hitbox inset absorbs this.
 - Tested against the ceiling/floor columns overlapping the helicopter's x-range and against obstacle blocks.
 - Leaving the top or bottom of the play area counts as a crash (defensive; the cave normally covers these).
 - Touching edges count as a hit (≥ / ≤ comparisons are defined and tested).
 
 ### Score
 
-- Distance = scrolled px / 10, shown as an integer (≈ 24 per second at the default speed).
+- Distance = scrolled px / 10, shown as an integer (30 per second at the default speed).
 - Best score stored locally and updated on crash.
 - Score submitted to the platform leaderboard on crash only when it is a new local best. If submission fails, the pending score is persisted and retried on the next successful sign-in.
 - Leaderboard tamper limits configured in Play Console and App Store Connect (upper bound e.g. 1 000 000).
@@ -169,8 +198,10 @@ Pure game logic (`core/`) has no Flutter or Flame imports and is fully unit-test
 lib/
   main.dart                  # bootstrap, orientation lock, immersive fullscreen, service wiring
   app/
-    game_screen.dart         # Stack: input Listener + GameWidget + overlays; lifecycle observer
-    overlays/                # Flutter widgets: title, paused, game_over
+    app_flow.dart            # AppScreen enum + AppFlow (ChangeNotifier): which screen is shown, back-button routing
+    game_screen.dart         # Stack: input Listener + GameWidget + LcdViewport(screens); lifecycle observer; PopScope
+    lcd/                     # LcdViewport (800×400 FittedBox, bezel letterbox), LcdText, MenuList, SoftKey, LcdDialog, Scrollbar
+    screens/                 # Flutter widgets in 800×400 virtual px: title, main_menu, ready, paused, game_over, top_score, instructions
   game/
     helicopter_game.dart     # FlameGame: state machine, fixed-step accumulator, event → effects
     lcd/                     # palette tokens, LcdBuffer (160×80 bit grid + ghosting), LcdComponent painter, 1-bit sprite grids
@@ -199,23 +230,27 @@ test/
 integration_test/            # on-device smoke: launch, play, crash, restart
 ```
 
-The HUD is a Flame component so it scales with the fixed-resolution viewport. Input is captured by a Flutter `Listener` around the `GameWidget` (pointer down/up/cancel counting); overlays sit above it in a `Stack` so their buttons don't trigger flight. `GameSimulation` is the single entry point for a tick, which lets tests and the passability checker run thousands of headless runs.
+The HUD is a Flame component so it scales with the fixed-resolution viewport. Menu screens and dialogs are Flutter widgets laid out in the same 800×400 virtual coordinate space (one `FittedBox` with the same letterboxing as the Flame camera), so their text and borders land on the same LCD grid as the game. Input is captured by a Flutter `Listener` around the `GameWidget` (pointer down/up/cancel counting); screens sit above it in a `Stack` and absorb their own taps so their buttons don't trigger flight. `GameSimulation` is the single entry point for a tick, which lets tests and the passability checker run thousands of headless runs.
 
 ### State Machine
 
 ```
-        tap                 hit                      new press ≥600 ms
-title ───────▶ playing ───────────▶ crashed ───────────────────────▶ playing
-                 │  ▲                   │ back
-       app bg /  │  │ tap (resumes      ▼
-       back      ▼  │ on release)     title
-               paused
+          tap            New game            press              hit           new press ≥600 ms
+title ─────────▶ menu ───────────▶ ready ──────────▶ playing ──────────▶ crashed ─────────────────▶ playing
+                 ▲ ▲ │  ▲            ▲  │ Menu/back     │  ▲                │ Menu/back
+                 │ │ │  │            │  ▼               │  │ Continue       ▼
+                 │ │ │  └────────────┼─ menu    back /  ▼  │ (→ ready)     menu
+                 │ │ ▼               │          app bg  paused ──Main menu──▶ menu
+                 │ topScore / instructions ──Back──▶ menu       └─New game──▶ ready (new run)
 ```
 
-- `title` (cold start only): title overlay, cave preview static, helicopter hovering, best score visible.
+- `title` (cold start only): splash; any tap → `menu`.
+- `menu`: main menu list; `New game` creates a new run and enters `ready`.
+- `ready`: world visible and frozen, `Hold to fly` dialog. A press enters `playing` with thrust already on. Entered from `New game` (fresh run) and from `Continue` (same run, stored velocity kept).
 - `playing`: fixed-step loop runs, rotor sound loops.
-- `paused`: entered when the app goes to background (`AppLifecycleState.inactive/paused`) or back is pressed; simulation and audio stop; "Tap to resume" overlay. The run resumes when that tap is released, keeping the stored vertical velocity.
-- `crashed`: explosion, rotor stops, crash SFX, best saved, score submitted if new best, game-over prompt. A valid new press starts a new run directly (classic behaviour); back returns to title.
+- `paused`: entered when the app goes to background (`AppLifecycleState.inactive/paused`) or back is pressed; simulation and audio stop; pause menu shown.
+- `crashed`: explosion, rotor stops, crash SFX, best saved, score submitted if new best, game-over dialog. A valid new press starts a new run directly in `playing` (classic behaviour); `Menu` / back → `menu`.
+- `topScore`, `instructions`: info screens; `Back` → `menu`.
 
 ### Per-Tick Data Flow (playing)
 
@@ -236,7 +271,7 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
 - Fixed virtual resolution 800×400 using Flame's fixed-resolution camera, letterboxed on other aspect ratios, so gameplay is identical across devices. Letterbox bars use the `bezel` colour, so the game reads as an LCD panel set into a dark phone body.
 - The HUD strip and soft keys are inset by the device safe-area padding (notch / rounded corners) so text is never clipped.
 - **LCD pipeline:** each frame, components draw into a 160×80 logical pixel buffer (positions computed from the interpolated state, then floored to LCD cells). One `LcdComponent` paints the buffer: `lcd` background, one rect per lit cell (batched with `drawRawAtlas` or a single `Path`), optional grid lines, and ghost pixels fading out. The inverted-flash crash effect swaps the two palette colours at this stage.
-- Render interpolation is still applied before snapping. This keeps the 1-LCD-pixel steps evenly spaced in time on 60/90/120 Hz screens.
+- Helicopter y interpolation is applied before snapping; the world scroll is whole LCD pixels per tick and is not interpolated.
 - Procedural 1-bit sprites are stored as bit grids (`List<String>` rows of `#`/`.` in code) and blitted into the buffer; no image filtering is involved.
 
 ### Audio
@@ -248,7 +283,7 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
 
 ### Platform Integration
 
-- Game Center / Play Games sign-in is attempted once at launch on the title screen (never mid-run, as iOS presents UI). If the player declined, the LEADERBOARD button retries sign-in and, on failure, shows a short non-blocking message.
+- Game Center / Play Games sign-in is attempted once at launch on the title screen (never mid-run, as iOS presents UI). If the player declined, the `Online scores` button on the Top score screen retries sign-in and, on failure, shows a short non-blocking message.
 - Leaderboard IDs are configured per platform in one constants file.
 
 ## Error Handling
@@ -269,7 +304,7 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
   - Collision: edge cases at exact touch, inside, and just outside.
   - Simulation: frame-rate independence — the same input timeline fed at 30/60/120 Hz frame deltas produces the same crash tick.
   - Config invariants (anti-tunnelling) hold.
-- Widget: title, paused, and game-over overlays render the right values; overlay buttons do not register as flight input.
+- Widget: every screen renders the right values; menu rows and soft keys navigate per the state machine; back-button routing; menu rows, dialogs and soft keys do not register as flight input.
 - Services: local store with mocked preferences; leaderboard service failure paths do not throw; pending score retry.
 - Integration (`integration_test/`, on device / emulator in CI where possible): launch → play → crash → restart.
 - Performance: profile build on the reference Android device; DevTools frame chart shows no frame > 32 ms over a 2-minute run.
@@ -283,6 +318,21 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
 - Open-source licenses shown via Flutter's license page (reachable from title screen long-press or store description).
 
 ## Change Log
+
+### 1.3 — 2026-10-18 (retro phone-game UI redesign)
+
+Approved by the product owner from the [design canvas](https://claude.ai/artifact/BZmh5D8PVzgqnXemYQszzm).
+
+| Area | Change | Reason |
+|---|---|---|
+| Screens | Nokia-style full-screen menus (inverted selection bar, item counter, pixel scrollbar, centred soft key); new main menu, Ready, Top score and Instructions screens; pause becomes a menu | Closer to the original phone games, and full-width rows are easier to tap than corner soft-key labels. |
+| HUD | Moved to the top (8 rows + rule); `00123` / `HI 00456` | Matches Snake / Space Impact. |
+| Type | Silkscreen fixed; body 40 px (1 font px = 1 LCD px), title 80 px; sentence case | Pixel-exact text on the LCD grid. |
+| Sprite | Helicopter 8×4 → 10×6 LCD px (50×30); hitbox 30×14 → 40×20, inset 1 LCD px | 8×4 was not readable as a helicopter; a grid-aligned inset keeps sprite and hitbox consistent. |
+| Speed | Scroll 240 → 300 px/s (1 LCD px per tick); scroll no longer interpolated | 240 px/s gave 48 steps/s on a 60 Hz screen, an uneven 4:1 cadence that contradicted the "no judder" goal. |
+| Generation | Min gap 160 → 170 px; obstacles 50–90 px in steps of 10; `minPassableHeight` 70 → 80 px; centre margin 10 px; no walk under an obstacle | Re-derived for the larger hitbox and faster scroll; closes the 65 px window edge case. |
+| Back button / state machine | Added `menu`, `ready`, `topScore`, `instructions`; back routing redefined | Follows the new screens. |
+| Environment | Dev machine is a Mac with Xcode; monorepo `working-directory`; working name Cave Copter (`cave_copter`); D4 updated | Reflects the actual setup. |
 
 ### 1.2 — 2026-10-15 (retro LCD art direction)
 
