@@ -4,6 +4,7 @@ import 'package:copter/copter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hop/hop.dart';
 import 'package:lcd_kit/lcd_kit.dart';
 import 'package:snake/snake.dart';
 
@@ -34,13 +35,12 @@ Future<void> main() async {
 }
 
 /// The collection, in launcher order.
-const games = <GameModule>[CopterModule(), SnakeModule()];
+const games = <GameModule>[CopterModule(), SnakeModule(), HopModule()];
 
 /// Launcher tiles: playable games, then games still to come.
 final launcherEntries = <LauncherEntry>[
   for (final g in games) LauncherEntry.of(g),
   const LauncherEntry(title: 'Blocks', icon: _blocksIcon),
-  const LauncherEntry(title: 'Hop', icon: _hopIcon),
 ];
 
 /// Storage, sound and one leaderboard per game, shared by the whole app.
@@ -147,19 +147,4 @@ const _blocksIcon = [
   '####..######',
   '############',
   '############',
-];
-
-const _hopIcon = [
-  '....##......',
-  '...####.....',
-  '..#####.#...',
-  '...####.....',
-  '...####.....',
-  '....#.#.....',
-  '............',
-  '#.#.#.#.#.#.',
-  '............',
-  '..######....',
-  '.########...',
-  '..#....#....',
 ];

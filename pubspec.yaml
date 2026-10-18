@@ -11,3 +11,4 @@ workspace:
   - packages/lcd_kit
   - packages/games/copter
   - packages/games/snake
+  - packages/games/hop

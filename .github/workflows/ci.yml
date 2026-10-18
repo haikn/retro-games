@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [app, packages/arcade_core, packages/lcd_kit, packages/games/copter, packages/games/snake]
+        package: [app, packages/arcade_core, packages/lcd_kit, packages/games/copter, packages/games/snake, packages/games/hop]
     defaults:
       run:
         working-directory: ${{ matrix.package }}

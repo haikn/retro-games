@@ -13,6 +13,7 @@ dependencies:
   lcd_kit:
   copter:
   snake:
+  hop:
 
 dev_dependencies:
   flutter_test:
