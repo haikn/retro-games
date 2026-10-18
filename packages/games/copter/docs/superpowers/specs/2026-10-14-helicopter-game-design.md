@@ -279,6 +279,7 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
 - Audio session category *ambient* (iOS) so the game respects the silent switch and does not stop the player's music.
 - Sound style matches the visuals: **monophonic square-wave beeps**, like an old phone's buzzer. The rotor is a low, quiet square-wave pulse loop; the crash is a short descending beep run; a new best plays a 3-note rising jingle; menu soft keys play a short key click.
 - Rotor loop is a seamlessly looping WAV (no MP3, which gaps on loop); started on `playing`, stopped on `paused`/`crashed`.
+- Planned (collection plan A5.1 F1): a softer rotor — lower pitch, rounded edges, per-pulse fades, half the volume.
 - Mute persists across launches.
 
 ### Platform Integration

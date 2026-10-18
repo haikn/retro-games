@@ -12,7 +12,10 @@ Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-
 | A3 Hop | Done |
 | A4 Blocks | Done, held back from release builds until C4 |
 | A5 Polish & QA | Code done (shared sign-in, collection icon, smoke test, Hop drawing cost); **device QA, performance and playtest tuning need real phones** |
+| A5.1 Playtest feedback round 1 | ⬜ planned (below) |
 | A6 Release | Not started (store accounts and records) |
+
+Status: ✅ done · 🟡 code done, still needs a device, store setup or a decision · ⬜ not started. Per-task status is marked in the tables below.
 
 ## Approach
 
@@ -40,22 +43,22 @@ Assumptions: one developer, ideal days; store review and legal review time are e
 
 | # | Task | Done when |
 |---|---|---|
-| 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
-| 0.2 | Send Blocks (C4) for IP review with the canvas board and the rules section | Review requested; answer expected before A4 |
-| 0.3 | Confirm Hop presentation rules (C5) | Spec updated |
+| ⬜ 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
+| ⬜ 0.2 | Send Blocks (C4) for IP review with the canvas board and the rules section | Review requested; answer expected before A4 |
+| ⬜ 0.3 | Confirm Hop presentation rules (C5) | Spec updated |
 
 ## A1 — Collection Shell (5 days)
 
 | # | Task | Acceptance |
 |---|---|---|
-| 1.1 | Dart pub workspace: `app/`, `packages/lcd_kit`, `packages/games/copter`; move code with history (`git mv`) | `flutter analyze` and all 164 Copter tests pass from the new layout |
-| 1.2 | Extract to `lcd_kit`: LcdBuffer, LcdPainter, palette, text styles, sprites, LCD widgets, AudioService, LocalStore, LeaderboardService, synth tool | No game imports another game; kit has its own tests |
-| 1.3 | Make `LcdViewport` orientation-aware (800×400 or 400×800); menu widgets lay out in both | Widget tests render the menu in both sizes |
-| 1.4 | `GameModule` / `GameHost` interfaces; Copter implements them | Copter runs unchanged inside the shell |
-| 1.5 | `LocalStore` namespaces per game (`copter.best`, …) with a one-time migration of the existing Copter keys | Existing best score survives the update |
-| 1.6 | Launcher screen per canvas board 1 (tiles, inverted selection, counter, `Select`) | Matches the canvas in a rendered image; tile taps open games |
-| 1.7 | Orientation switching on route push/pop; iOS `Info.plist` and Android manifest opened up; platform guard test updated | Launcher portrait → Copter landscape → back, no stretched frame, on iPhone and Android |
-| 1.8 | Per-game menu with `All games`; app-wide sound setting | Back from any game menu returns to the launcher |
+| ✅ 1.1 | Dart pub workspace: `app/`, `packages/lcd_kit`, `packages/games/copter`; move code with history (`git mv`) | `flutter analyze` and all 164 Copter tests pass from the new layout |
+| ✅ 1.2 | Extract to `lcd_kit`: LcdBuffer, LcdPainter, palette, text styles, sprites, LCD widgets, AudioService, LocalStore, LeaderboardService, synth tool | No game imports another game; kit has its own tests |
+| ✅ 1.3 | Make `LcdViewport` orientation-aware (800×400 or 400×800); menu widgets lay out in both | Widget tests render the menu in both sizes |
+| ✅ 1.4 | `GameModule` / `GameHost` interfaces; Copter implements them | Copter runs unchanged inside the shell |
+| ✅ 1.5 | `LocalStore` namespaces per game (`copter.best`, …) with a one-time migration of the existing Copter keys | Existing best score survives the update |
+| ✅ 1.6 | Launcher screen per canvas board 1 (tiles, inverted selection, counter, `Select`) | Matches the canvas in a rendered image; tile taps open games |
+| 🟡 1.7 | Orientation switching on route push/pop; iOS `Info.plist` and Android manifest opened up; platform guard test updated | Launcher portrait → Copter landscape → back, no stretched frame, on iPhone and Android |
+| ✅ 1.8 | Per-game menu with `All games`; app-wide sound setting | Back from any game menu returns to the launcher |
 
 Exit: Copter fully playable from the launcher on both platforms.
 
@@ -63,43 +66,59 @@ Exit: Copter fully playable from the launcher on both platforms.
 
 | # | Task | Acceptance |
 |---|---|---|
-| 2.1 | `core/`: grid, wrap, growth, self-collision, turn queue, food and bonus placement, level speeds, seeded RNG | Unit tests per spec; determinism per seed |
-| 2.2 | Rendering into `LcdBuffer` (joined body, head eye, food, bonus), HUD, 3-flash game over | Rendered image matches canvas board 3 |
-| 2.3 | Swipe input (absolute direction, 12-px threshold, 2-turn queue) | Widget tests for swipes, reverse ignored |
-| 2.4 | Menu with `Level`, pause, game over, top score, instructions | Widget tests per screen |
-| 2.5 | Sounds (eat, bonus, crash), best score, leaderboard | Service tests with fakes |
+| ✅ 2.1 | `core/`: grid, wrap, growth, self-collision, turn queue, food and bonus placement, level speeds, seeded RNG | Unit tests per spec; determinism per seed |
+| ✅ 2.2 | Rendering into `LcdBuffer` (joined body, head eye, food, bonus), HUD, 3-flash game over | Rendered image matches canvas board 3 |
+| ✅ 2.3 | Swipe input (absolute direction, 12-px threshold, 2-turn queue) | Widget tests for swipes, reverse ignored |
+| ✅ 2.4 | Menu with `Level`, pause, game over, top score, instructions | Widget tests per screen |
+| ✅ 2.5 | Sounds (eat, bonus, crash), best score, leaderboard | Service tests with fakes |
 
 ## A3 — Hop (9 days)
 
 | # | Task | Acceptance |
 |---|---|---|
-| 3.1 | `core/`: lanes, columns, hop movement and timing, vehicles, logs carrying, trains with warning | Unit tests per rule |
-| 3.2 | Seeded lane generator with the path guarantee and difficulty ramp | **Property test**: thousands of lanes × many seeds, a path always exists; traffic and log gaps within bounds |
-| 3.3 | Edge pressure and camera | Tests for speed ramp and falling off the edge |
-| 3.4 | Sprites (chicken, car, truck, log, tree, train) and lane rendering | Rendered image matches canvas board 5 |
-| 3.5 | Input (tap forward, swipes), menu, pause, game over, sounds, leaderboard | Widget and service tests |
-| 3.6 | Optional: look-ahead bot sanity test (as for Copter) | Bot survives a target distance on most seeds |
+| ✅ 3.1 | `core/`: lanes, columns, hop movement and timing, vehicles, logs carrying, trains with warning | Unit tests per rule |
+| ✅ 3.2 | Seeded lane generator with the path guarantee and difficulty ramp | **Property test**: thousands of lanes × many seeds, a path always exists; traffic and log gaps within bounds |
+| ✅ 3.3 | Edge pressure and camera | Tests for speed ramp and falling off the edge |
+| ✅ 3.4 | Sprites (chicken, car, truck, log, tree, train) and lane rendering | Rendered image matches canvas board 5 |
+| ✅ 3.5 | Input (tap forward, swipes), menu, pause, game over, sounds, leaderboard | Widget and service tests |
+| ✅ 3.6 | Optional: look-ahead bot sanity test (as for Copter) | Bot survives a target distance on most seeds |
 
 ## A4 — Blocks (7 days, gated by C4)
 
 | # | Task | Acceptance |
 |---|---|---|
-| 4.1 | Apply the legal outcome to the rules (board, pieces, name) | Spec updated |
-| 4.2 | `core/`: pieces, rotation + kicks, collision, row clearing, scoring, gravity table, shuffled bag | Unit tests per rule |
-| 4.3 | Rendering (bricks, next preview, row blink), HUD | Rendered image matches canvas board 4 |
-| 4.4 | Gesture input (tap rotate, drag columns, soft/hard drop) | Widget tests with recorded gestures |
-| 4.5 | Menu with start `Level`, pause, game over, sounds, leaderboard | Widget and service tests |
+| ⬜ 4.1 | Apply the legal outcome to the rules (board, pieces, name) | Spec updated |
+| ✅ 4.2 | `core/`: pieces, rotation + kicks, collision, row clearing, scoring, gravity table, shuffled bag | Unit tests per rule |
+| ✅ 4.3 | Rendering (bricks, next preview, row blink), HUD | Rendered image matches canvas board 4 |
+| ✅ 4.4 | Gesture input (tap rotate, drag columns, soft/hard drop) | Widget tests with recorded gestures |
+| ✅ 4.5 | Menu with start `Level`, pause, game over, sounds, leaderboard | Widget and service tests |
 
 ## A5 — Collection Polish and QA (5 days)
 
 | # | Task | Acceptance |
 |---|---|---|
-| 5.1 | App icon and splash for the collection (launcher-style tile art) | Legible at 48 px |
-| 5.2 | Four leaderboards in App Store Connect and Play Console; IDs in one constants file | Scores visible on all eight boards |
-| 5.3 | Performance in both orientations on the low-end Android device; 120 Hz check on iPhone | No frame > 32 ms in 2-minute sessions per game |
-| 5.4 | Device and interruption matrix (rotation while backgrounded, calls, notification shade) | Always pauses, correct orientation on resume |
-| 5.5 | Playtest tuning per game (speeds, densities) | Median first run 20–60 s per game |
-| 5.6 | On-device smoke test: launcher → each game → crash → back | Green on emulator in CI |
+| ✅ 5.1 | App icon and splash for the collection (launcher-style tile art) | Legible at 48 px |
+| 🟡 5.2 | Four leaderboards in App Store Connect and Play Console; IDs in one constants file | Scores visible on all eight boards |
+| ⬜ 5.3 | Performance in both orientations on the low-end Android device; 120 Hz check on iPhone | No frame > 32 ms in 2-minute sessions per game |
+| ⬜ 5.4 | Device and interruption matrix (rotation while backgrounded, calls, notification shade) | Always pauses, correct orientation on resume |
+| ⬜ 5.5 | Playtest tuning per game (speeds, densities) | Median first run 20–60 s per game |
+| ✅ 5.6 | On-device smoke test: launcher → each game → crash → back | Green on emulator in CI |
+
+## A5.1 — Playtest Feedback, Round 1 (≈ 3 days)
+
+From the product owner's first play session (2026-10-18). Design details: spec section *Playtest feedback, round 1*.
+
+| # | Task | Acceptance |
+|---|---|---|
+| ⬜ F1 | Copter: softer rotor sound (rounded square, lower pitch, per-pulse fades, lower volume) | Loop stays seamless (test); owner approves on device |
+| ⬜ F2 | Menus and How to play: show the scrollbar only when the content is taller than its area | Widget tests: short menu without scrollbar, long text with one |
+| ⬜ F3 | Blocks: longer lock delay that resets on each successful move or rotate (capped) so pieces can still slide at the bottom | Core tests for slide, reset and cap |
+| ⬜ F4 | Pause / continue / quit reachable on screen in every grid game (Blocks: pause key in the side panel; Snake, Hop: tap the HUD strip) | Widget tests; works without a back button (iPhone) |
+| ⬜ F5 | Blocks: bricks drawn like a handheld console (1-px border with a centre dot) | Rendered image approved |
+| ⬜ F6 | Snake: head bigger than the body (full 4×4 cell, eye, notch toward the heading) | Rendered image approved |
+| ⬜ F7 | Snake: bonus becomes an animated bomb (2×2 cells, flickering fuse), lasts 8 s, blinks in the last 2 s, value drops with time | Core tests for size, timing and value; rendered frames approved |
+| ⬜ F8 | Snake: bottom margin equal to the side margins (field 19×36, border LCD y 13–158) | Rendered image; core tests updated for 36 rows |
+| ⬜ F9 | Decide C6 (languages) and C7 (Copter speed ramp); implement if accepted | Spec updated |
 
 ## A6 — Release
 

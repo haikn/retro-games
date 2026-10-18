@@ -31,6 +31,9 @@ Success criteria: as Cave Copter (60 fps on the low-end reference device, identi
 | C4 | **Falling-block game: legal review** (Blocks is built but `releaseCleared = false`: release builds show it as "Coming soon") | **Get a short review by an IP lawyer before building Blocks**; schedule Blocks last | The Tetris Company enforces its rights actively, and in *Tetris Holding v. Xio Interactive* (D.N.J. 2012) a clone was found to infringe on the *look* of Tetris (the 10×20 board, the seven four-cell pieces, how they look and move), not only its name. A monochrome LCD style differs from Tetris' coloured look, but that alone may not be enough. Fallback if advised: change the board and pieces (e.g. 3-cell or 5-cell pieces, a different well shape) or drop Blocks. |
 | C5 | Hop: avoid copying Crossy Road's distinctive elements | Generic crossing mechanics (lanes, cars, logs, trains) with our own art and no "eagle"-style chaser; time pressure comes from a slowly advancing screen edge instead | Mechanics are not protected; distinctive characters, names and presentation can be. |
 
+| C6 | Languages: follow the phone language? | v1 in English, with all text in one place so it can be translated; add German, French, Spanish and Portuguese once a width check passes; other languages (Vietnamese, Polish, Turkish, Cyrillic, Asian scripts) need a second pixel font | See *Questions answered* below: the Silkscreen font only covers Western European letters, and portrait rows fit about 10 letters. |
+| C7 | Copter: keep getting harder after the first minute? | Yes, by density (more and taller blocks, gap down to 160 px), not by speed | Speed is fixed at exactly 1 LCD pixel per frame, which is what makes the scroll smooth; faster scrolling would bring the judder back. See *Questions answered*. |
+
 ## Platform and Orientation
 
 - The **launcher is portrait** (three of four games are portrait). Opening Copter rotates to landscape; leaving it rotates back.
@@ -98,6 +101,40 @@ packages/
 - **Score**: furthest lane reached.
 - **Generation** (seeded, passable by construction, like Copter's cave): every grass lane keeps at least 2 free columns and a free path from the previous lane; at most 3 river lanes in a row and log gaps bounded so the next log arrives within a set wait; traffic gaps never smaller than the hop time; density and speed rise with distance. A property test generates thousands of lanes per seed and checks that a path exists.
 - **Tests**: hop movement, carrying on logs, drowning, vehicle and train collisions, edge pressure, generator path guarantee.
+
+## Playtest feedback, round 1 (2026-10-18) — planned, not yet built
+
+From the product owner's first session. Plan milestone A5.1 (F1–F9).
+
+**F1 · Copter: softer rotor.** Today: a 70 Hz square wave gated 14×/s at 40% duty, volume 0.5. New: about 55 Hz, edges rounded (square wave through a gentle low-pass), each pulse fading in and out over 4 ms instead of switching hard, volume 0.25. Still monophonic and still a seamless 1-s loop (the existing loop test stays). Generate two or three variants and pick one by ear on a phone.
+
+**F2 · Scrollbar only when needed.** Menus and How to play show the scrollbar only when their content is taller than the space for it. With today's menus (at most 6 rows) no menu shows one; How to play shows one only when its text overflows.
+
+**F3 · Blocks: time to slide at the bottom.** Today a piece locks 15 ticks (0.25 s) after landing, and only rotation restarts that timer. New: 30 ticks (0.5 s), restarted by every successful move or rotation, at most 15 restarts per piece so it cannot be stalled forever; hard drop still locks at once.
+
+**F4 · Pause, continue, quit on screen.** Pausing worked only with the Android back button or by leaving the app, so there was no way on an iPhone. New for every grid game:
+- Blocks: a pause key (`II`, 3×4 LCD px, touch target ≥ 48 dp) in the side panel under NEXT.
+- Snake and Hop: tapping the HUD strip (top 40 px) pauses; `How to play` says so.
+- Pause menu (as now): `Continue`, `New game`, `Sound`, `Main menu` (= quit; the run is abandoned).
+
+**F5 · Blocks: console-style bricks.** Each 5×5 LCD-px cell drawn as a 1-px square border with a single centre dot (instead of a solid 4×4 block), so the well looks like an old handheld. Adjacent bricks share border lines; check the look in a rendered image before committing.
+
+**F6 · Snake: bigger head.** Body segments stay 3×3 in their 4×4 cells; the head fills its whole 4×4 cell, with an eye and a 1-px notch (mouth) on the side it is heading.
+
+**F7 · Snake: bomb bonus.** Replaces the 3×3 bug: a bomb sprite over 2×2 cells (8×8 LCD px), round body with a fuse whose spark flickers between two frames, like the bonus creatures in the old phone game. It lasts 8 s (was 5 s), blinks during the last 2 s, and is eaten by touching any of its 4 cells. Its value drops with the time left: `level × (2 + seconds left)`, so 10 × level when eaten at once, 2 × level at the end.
+
+**F8 · Snake: bottom margin.** The field gets the same 1-LCD-px margin at the bottom as at the sides: 19×36 cells (was 37), border at LCD y 13–158, leaving 4 blank rows under the HUD rule.
+
+### Questions answered
+
+**Does Copter get harder the longer you play?** Partly. During the first ≈ 67 s (distance 0–2 000) the tunnel narrows from 300 to 170 px and blocks come twice as often (every 600 px → 300 px). After that it stays the same. The helicopter never speeds up: scrolling is fixed at 300 px/s, exactly one LCD pixel per frame, which is what keeps it smooth. Proposal C7: keep the speed, and after distance 2 000 keep ramping density instead — blocks every 300 → 200 px and the tunnel down to 160 px by distance 4 000 (blocks at most 80 px tall then, so an 80-px window always remains and the passability guarantee still holds).
+
+**Does Blocks level up by points?** No, by rows: one level per 10 cleared rows, counted from the start level picked in the menu. Each level makes pieces fall faster, and points for cleared rows are multiplied by the level, so points follow from the level rather than the other way round. This is the classic rule; levelling by points would reward slow, safe play less clearly.
+
+**Can the language follow the phone?** Yes, technically (Flutter localisation). Two limits:
+- Font: Silkscreen covers English, German, French, Spanish and Portuguese, but not Polish, Turkish, Vietnamese, Cyrillic or Asian scripts. Those would need a second pixel font that has those letters, chosen and checked separately.
+- Width: a portrait menu row fits about 10 letters at the LCD text size, and translations are often longer ("New game" → "Nouvelle partie", 15). Each language needs short wording, checked automatically by a test that measures every string with the real font.
+See decision C6.
 
 ## Store & Compliance
 
