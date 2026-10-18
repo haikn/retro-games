@@ -1,0 +1,4 @@
+tags:
+  # Long-running property checks. Excluded from the per-push CI job with
+  # `--exclude-tags slow`; run locally or in the nightly job.
+  slow:

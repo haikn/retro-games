@@ -1,0 +1,12 @@
+name: arcade_core
+description: Pure-Dart building blocks shared by the games' simulation cores (no Flutter).
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
