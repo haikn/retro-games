@@ -54,7 +54,8 @@ void main() {
   });
 
   test('ghost pixels are drawn between the two tones', () async {
-    final b = LcdBuffer(width: 2, height: 1)..beginFrame(0);
+    final b = LcdBuffer(width: 2, height: 1, ghostDuration: 0.06)
+      ..beginFrame(0);
     b.set(0, 0);
     b.endFrame();
     b.beginFrame(1 / 60);

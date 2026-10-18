@@ -92,4 +92,14 @@ void main() {
     plain.endFrame();
     expect(plain.ghostLevel(0, 0), 0);
   });
+
+  test('ghosting is off by default', () {
+    final plain = LcdBuffer(width: 2, height: 2);
+    plain.beginFrame(0);
+    plain.set(0, 0);
+    plain.endFrame();
+    plain.beginFrame(1 / 60);
+    plain.endFrame();
+    expect(plain.ghostLevel(0, 0), 0);
+  });
 }

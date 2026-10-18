@@ -5,11 +5,12 @@ import 'sprites.dart';
 /// The LCD screen as a grid of on/off pixels plus ghost timers.
 ///
 /// Each frame: [beginFrame], draw with [set] / [fillRect] / [blit], then
-/// [endFrame]. Pixels that were on last frame and are off now get a ghost
-/// that fades over [ghostDuration] seconds (slow-LCD look). No allocation
-/// after construction.
+/// [endFrame]. With [ghostDuration] > 0, pixels that were on last frame and
+/// are off now leave a ghost that fades over that many seconds (slow-LCD
+/// look). Off by default: playtesting showed it reads as an echo on moving
+/// walls (spec 1.3). No allocation after construction.
 class LcdBuffer {
-  LcdBuffer({this.width = 160, this.height = 80, this.ghostDuration = 0.06})
+  LcdBuffer({this.width = 160, this.height = 80, this.ghostDuration = 0})
     : _cells = Uint8List(width * height),
       _prev = Uint8List(width * height),
       _ghost = Float32List(width * height);

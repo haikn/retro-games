@@ -95,7 +95,7 @@ An alternative palette for a more strictly black-and-white look (`#E0E6D8` / `#1
   ```
 - Smoke: single `ink` LCD pixels emitted every 4 ticks behind the tail (one pixel left of the sprite, row 3 of the sprite), drifting left with the world, living 16–30 ticks and blinking at random during their last 6 ticks instead of fading with alpha.
 - Crash: the helicopter disappears, 12 single-pixel debris bits fly out with gravity for ~1.1 s, and the whole screen **inverts** (ink ↔ lcd) 3 times (ticks 0–4, 10–14, 20–24). The game-over box appears at tick 40.
-- LCD ghosting (optional, on by default): pixels that switch off fade out over ~60 ms, mimicking a slow LCD. This is the only place a third tone appears, and it is drawn only as a fading `ink` pixel.
+- LCD ghosting (optional, **off**): pixels that switch off could fade out over ~60 ms, mimicking a slow LCD. Supported by the renderer but disabled, because in playtesting the 1-pixel-per-frame scroll made it read as an echo on every moving edge. With it off, exactly two tones are on screen.
 - Motion: positions are snapped to the LCD grid when drawn, so the cave moves in visible 1-pixel steps, like the original phones. The simulation itself stays continuous (see Physics).
 
 **Text and HUD.**
@@ -322,6 +322,8 @@ No per-tick allocations in `core/` (ring buffers and object pools) to avoid GC h
 ### 1.3 — 2026-10-18 (retro phone-game UI redesign)
 
 Approved by the product owner from the [design canvas](https://claude.ai/artifact/BZmh5D8PVzgqnXemYQszzm).
+
+Playtest follow-up (2026-10-18): LCD ghosting switched off by default; it showed as an echo on moving walls and the helicopter, unlike the design canvas.
 
 | Area | Change | Reason |
 |---|---|---|
