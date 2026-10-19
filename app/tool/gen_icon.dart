@@ -20,7 +20,12 @@ void _rect(img.Image image, int x, int y, int w, int h, img.Color c) =>
 
 /// Four tiles in a 2×2 grid; the first is inverted like the launcher's
 /// selected tile.
-void _tiles(img.Image image, {required int tile, required int gap, required int border}) {
+void _tiles(
+  img.Image image, {
+  required int tile,
+  required int gap,
+  required int border,
+}) {
   final grid = 2 * tile + gap;
   final origin = (size - grid) ~/ 2;
   final cell = (tile - 2 * border) * 2 ~/ 3 ~/ 12; // icon ≈ 2/3 of the tile
@@ -30,7 +35,14 @@ void _tiles(img.Image image, {required int tile, required int gap, required int 
     final selected = i == 0;
     _rect(image, x, y, tile, tile, ink);
     if (!selected) {
-      _rect(image, x + border, y + border, tile - 2 * border, tile - 2 * border, lcd);
+      _rect(
+        image,
+        x + border,
+        y + border,
+        tile - 2 * border,
+        tile - 2 * border,
+        lcd,
+      );
     }
     final rows = iconGrids[i];
     final ix = x + (tile - 12 * cell) ~/ 2;
@@ -38,7 +50,14 @@ void _tiles(img.Image image, {required int tile, required int gap, required int 
     for (var r = 0; r < 12; r++) {
       for (var c = 0; c < 12; c++) {
         if (rows[r][c] == '#') {
-          _rect(image, ix + c * cell, iy + r * cell, cell, cell, selected ? lcd : ink);
+          _rect(
+            image,
+            ix + c * cell,
+            iy + r * cell,
+            cell,
+            cell,
+            selected ? lcd : ink,
+          );
         }
       }
     }
@@ -48,14 +67,12 @@ void _tiles(img.Image image, {required int tile, required int gap, required int 
 void main() {
   Directory('assets/icon').createSync(recursive: true);
 
-  final icon = img.Image(width: size, height: size, numChannels: 4)
-    ..clear(lcd);
+  final icon = img.Image(width: size, height: size, numChannels: 4)..clear(lcd);
   _tiles(icon, tile: 408, gap: 48, border: 24);
   File('assets/icon/icon.png').writeAsBytesSync(img.encodePng(icon));
 
   // Android adaptive foreground: inside the 66% safe zone.
-  final fg = img.Image(width: size, height: size, numChannels: 4)
-    ..clear(clear);
+  final fg = img.Image(width: size, height: size, numChannels: 4)..clear(clear);
   _tiles(fg, tile: 300, gap: 36, border: 18);
   File('assets/icon/icon_foreground.png').writeAsBytesSync(img.encodePng(fg));
 

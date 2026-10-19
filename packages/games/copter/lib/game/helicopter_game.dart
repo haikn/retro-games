@@ -109,7 +109,16 @@ class HelicopterGame extends FlameGame {
     phase.value = GamePhase.ready;
   }
 
-  void pointerDown() {
+  /// Height of the HUD strip in virtual px; a press there while playing
+  /// pauses instead of flying (iPhones have no back button).
+  static const hudHeight = 45.0;
+
+  /// A finger went down at virtual y [y] (null: position unknown).
+  void pointerDown([double? y]) {
+    if (y != null && y < hudHeight && phase.value == GamePhase.playing) {
+      pause();
+      return;
+    }
     _pointers++;
     switch (phase.value) {
       case GamePhase.ready:

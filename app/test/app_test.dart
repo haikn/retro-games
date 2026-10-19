@@ -1,13 +1,23 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcd_arcade/main.dart';
+import 'package:lcd_arcade/remote/remote_settings.dart';
 import 'package:lcd_kit/lcd_kit.dart';
 import 'package:lcd_kit/testing.dart';
 
 void main() {
   late List<List<String>> orientationRequests;
 
-  Future<void> pumpArcade(WidgetTester tester) async {
+  late List<RemoteSettings> storeOpens;
+
+  Future<void> pumpArcade(
+    WidgetTester tester, {
+    ValueNotifier<RemoteSettings>? remote,
+    LocalStore? store,
+  }) async {
+    storeOpens = [];
+    await tester.runAsync(loadLcdFont);
     orientationRequests = [];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -26,11 +36,18 @@ void main() {
     );
     setScreen(tester, portrait: true);
     final services = ArcadeServices.create(
-      LocalStore.memory(),
+      store ?? LocalStore.memory(),
       games,
       backend: (_) => FakeBackend(),
     );
-    await tester.pumpWidget(LcdArcadeApp(services: services));
+    await tester.pumpWidget(
+      LcdArcadeApp(
+        services: services,
+        remote: remote,
+        version: '1.0.0',
+        openStore: (s) async => storeOpens.add(s),
+      ),
+    );
     await tester.pump();
   }
 
@@ -43,6 +60,41 @@ void main() {
     for (final title in ['Copter', 'Snake', 'Blocks', 'Hop']) {
       expect(find.text(title), findsOneWidget);
     }
+  });
+
+  testWidgets('a newer version is offered once; Later dismisses it', (
+    tester,
+  ) async {
+    final remote = ValueNotifier(const RemoteSettings(latestVersion: '1.1.0'));
+    final store = LocalStore.memory();
+    await pumpArcade(tester, remote: remote, store: store);
+    expect(find.text('New version'), findsOneWidget);
+    expect(find.text('Copter'), findsNothing);
+    await tester.tap(find.text('Update'));
+    expect(storeOpens, hasLength(1));
+    await tester.tap(find.text('Later'));
+    await tester.pump();
+    expect(find.text('Copter'), findsOneWidget);
+    // Remembered after a restart; a later release asks again.
+    await pumpArcade(tester, remote: remote, store: store);
+    expect(find.text('New version'), findsNothing);
+    remote.value = const RemoteSettings(latestVersion: '1.2.0');
+    await tester.pump();
+    expect(find.text('New version'), findsOneWidget);
+  });
+
+  testWidgets('below the minimum version the games stay locked', (
+    tester,
+  ) async {
+    final remote = ValueNotifier(const RemoteSettings(minVersion: '1.1.0'));
+    await pumpArcade(tester, remote: remote);
+    expect(find.text('Must update'), findsOneWidget);
+    expect(find.text('Later'), findsNothing);
+    expect(find.text('Copter'), findsNothing);
+    // Lifted remotely: the launcher comes back without a restart.
+    remote.value = RemoteSettings.defaults;
+    await tester.pump();
+    expect(find.text('Copter'), findsOneWidget);
   });
 
   test('release builds hold back games not cleared for release', () {

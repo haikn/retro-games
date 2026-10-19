@@ -59,6 +59,8 @@ class ArcadeSpec {
     this.levels,
     this.defaultLevel = 1,
     this.pauseKey,
+    this.swipeThreshold = 30,
+    this.continuousSwipes = false,
   });
 
   /// Menu header.
@@ -83,4 +85,10 @@ class ArcadeSpec {
   /// Where to draw an on-screen pause key (virtual px), if the game has
   /// room for one. Tapping the HUD strip pauses every game regardless.
   final Rect? pauseKey;
+
+  /// Finger travel (virtual px) that makes a swipe.
+  final double swipeThreshold;
+
+  /// See [ArcadeGestureLayer.continuousSwipes].
+  final bool continuousSwipes;
 }

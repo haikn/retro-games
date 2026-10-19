@@ -20,8 +20,9 @@ class DragInput extends GameInput {
   final double dy;
 }
 
-/// The gesture moved far enough to count as a swipe (sent once per gesture,
-/// as soon as the threshold is crossed, so turns react immediately).
+/// The gesture moved far enough to count as a swipe, sent as soon as the
+/// threshold is crossed so turns react immediately. Once per gesture, or
+/// once per change of direction with [ArcadeGestureLayer.continuousSwipes].
 class SwipeInput extends GameInput {
   const SwipeInput(this.dir);
   final Dir dir;
@@ -43,6 +44,7 @@ class ArcadeGestureLayer extends StatefulWidget {
     required this.onInput,
     required this.child,
     this.swipeThreshold = 30,
+    this.continuousSwipes = false,
   });
 
   final void Function(GameInput input) onInput;
@@ -50,6 +52,12 @@ class ArcadeGestureLayer extends StatefulWidget {
 
   /// Movement (virtual px) after which a gesture is a swipe.
   final double swipeThreshold;
+
+  /// Keep reading swipes until the finger lifts: after each one the
+  /// gesture is measured again from the finger's current position, and a
+  /// new [SwipeInput] is sent whenever it heads in a new direction (one
+  /// stroke can turn right, then up, then left).
+  final bool continuousSwipes;
 
   @override
   State<ArcadeGestureLayer> createState() => _ArcadeGestureLayerState();
@@ -63,6 +71,7 @@ class _ArcadeGestureLayerState extends State<ArcadeGestureLayer> {
   Duration _lastTime = Duration.zero;
   Offset _velocity = Offset.zero;
   bool _swiped = false;
+  Dir? _lastDir;
 
   void _down(PointerDownEvent e) {
     if (_pointer != null) return;
@@ -71,6 +80,7 @@ class _ArcadeGestureLayerState extends State<ArcadeGestureLayer> {
     _startTime = _lastTime = e.timeStamp;
     _velocity = Offset.zero;
     _swiped = false;
+    _lastDir = null;
     widget.onInput(PressInput(e.localPosition));
   }
 
@@ -83,18 +93,18 @@ class _ArcadeGestureLayerState extends State<ArcadeGestureLayer> {
     _lastTime = e.timeStamp;
     widget.onInput(DragInput(delta.dx, delta.dy));
     final total = e.localPosition - _start;
-    if (!_swiped &&
-        (total.dx.abs() >= widget.swipeThreshold ||
-            total.dy.abs() >= widget.swipeThreshold)) {
-      _swiped = true;
-      widget.onInput(
-        SwipeInput(
-          total.dx.abs() > total.dy.abs()
-              ? (total.dx > 0 ? Dir.right : Dir.left)
-              : (total.dy > 0 ? Dir.down : Dir.up),
-        ),
-      );
-    }
+    final crossed =
+        total.dx.abs() >= widget.swipeThreshold ||
+        total.dy.abs() >= widget.swipeThreshold;
+    if (!crossed || (_swiped && !widget.continuousSwipes)) return;
+    final dir = total.dx.abs() > total.dy.abs()
+        ? (total.dx > 0 ? Dir.right : Dir.left)
+        : (total.dy > 0 ? Dir.down : Dir.up);
+    _swiped = true;
+    if (widget.continuousSwipes) _start = e.localPosition;
+    if (dir == _lastDir) return; // still the same stroke
+    _lastDir = dir;
+    widget.onInput(SwipeInput(dir));
   }
 
   void _up(PointerEvent e) {

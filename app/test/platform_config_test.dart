@@ -52,6 +52,16 @@ void main() {
     );
   });
 
+  test('AdMob app id present on both platforms (the Android app crashes at '
+      'launch without it)', () {
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+    expect(manifest, contains('com.google.android.gms.ads.APPLICATION_ID'));
+    expect(manifest, contains('ca-app-pub-'));
+    final plist = File('ios/Runner/Info.plist').readAsStringSync();
+    expect(plist, contains('<key>GADApplicationIdentifier</key>'));
+  });
+
   test('Xcode asset symbol setting intact (flutter_launcher_icons rewrites '
       'it to "AppIcon")', () {
     final pbx = File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();

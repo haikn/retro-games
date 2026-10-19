@@ -1,16 +1,19 @@
 import 'package:lcd_kit/synth.dart';
 
-/// Rotor (F1, softer): a low square tone with rounded edges, gated into
-/// pulses that fade in and out over 4 ms, at a quiet level. Tone and pulse
+/// Rotor (F1, softer): a square tone with rounded edges, gated into pulses
+/// that fade in and out over 4 ms. The tone sits at 98–140 Hz and keeps its
+/// harmonics up to about 1 kHz: phone speakers play almost nothing below
+/// 300 Hz, so a lower or smoother tone is silent on a phone. Tone and pulse
 /// rates divide 1 s exactly, so the 1 s loop repeats seamlessly.
 const rotorChopHz = 14;
 
 /// The rotor variants to compare by ear; [defaultRotor] ships as rotor.wav.
-const rotorVariants = <String, ({int toneHz, double duty, double volume, double edgeMs})>{
-  'rotor_a': (toneHz: 56, duty: 0.35, volume: 0.11, edgeMs: 0.6),
-  'rotor_b': (toneHz: 56, duty: 0.30, volume: 0.09, edgeMs: 1.0),
-  'rotor_c': (toneHz: 42, duty: 0.30, volume: 0.10, edgeMs: 1.4),
-};
+const rotorVariants =
+    <String, ({int toneHz, double duty, double volume, double edgeMs})>{
+      'rotor_a': (toneHz: 98, duty: 0.35, volume: 0.25, edgeMs: 0.5),
+      'rotor_b': (toneHz: 112, duty: 0.35, volume: 0.24, edgeMs: 0.5),
+      'rotor_c': (toneHz: 140, duty: 0.35, volume: 0.22, edgeMs: 0.5),
+    };
 const defaultRotor = 'rotor_b';
 
 List<double> rotorVariant(String name) {
@@ -29,9 +32,7 @@ List<double> rotorVariant(String name) {
         return square(v.toneHz.toDouble(), i) * env;
       }(),
   ];
-  return [
-    for (final x in lowPass(raw, v.edgeMs, periodic: true)) x * v.volume,
-  ];
+  return [for (final x in lowPass(raw, v.edgeMs, periodic: true)) x * v.volume];
 }
 
 List<double> rotorLoop() => rotorVariant(defaultRotor);

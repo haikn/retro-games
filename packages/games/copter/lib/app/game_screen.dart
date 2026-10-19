@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
@@ -59,12 +61,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Listener(
-                behavior: HitTestBehavior.opaque,
-                onPointerDown: (_) => _game.pointerDown(),
-                onPointerUp: (_) => _game.pointerUp(),
-                onPointerCancel: (_) => _game.pointerUp(),
-                child: GameWidget(game: _game),
+              LayoutBuilder(
+                builder: (context, box) => Listener(
+                  behavior: HitTestBehavior.opaque,
+                  onPointerDown: (e) =>
+                      _game.pointerDown(_virtualY(e.localPosition.dy, box)),
+                  onPointerUp: (_) => _game.pointerUp(),
+                  onPointerCancel: (_) => _game.pointerUp(),
+                  child: GameWidget(game: _game),
+                ),
               ),
               ListenableBuilder(
                 listenable: Listenable.merge([
@@ -79,6 +84,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  /// Widget y → virtual y of the 800×400 screen, letterboxed and centred
+  /// in [box] like the game's viewport.
+  static double _virtualY(double y, BoxConstraints box) {
+    final scale = min(box.maxWidth / 800, box.maxHeight / 400);
+    return (y - (box.maxHeight - 400 * scale) / 2) / scale;
   }
 
   Widget _overlay() {

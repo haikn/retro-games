@@ -29,6 +29,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2"/>
+        <!-- AdMob app id. This is Google's TEST id: replace it with the real
+             one before release (docs/ads-and-updates-setup.md). -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -36,6 +41,11 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Store links for the update prompt (url_launcher). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
         <intent>
             <action
                 android:name="android.intent.action.PROCESS_TEXT"/>

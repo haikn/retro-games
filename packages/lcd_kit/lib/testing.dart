@@ -38,6 +38,14 @@ class FakePlayer implements SoundPlayer {
 
   @override
   Future<void> stopLoop() async => looping = null;
+
+  bool disposed = false;
+
+  @override
+  Future<void> dispose() async {
+    disposed = true;
+    looping = null;
+  }
 }
 
 class FakeBackend implements LeaderboardBackend {
