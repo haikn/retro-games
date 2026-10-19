@@ -28,20 +28,24 @@ void main() {
     expect(gen.gapAt(0), 300);
     expect(gen.gapAt(10000), 235);
     expect(gen.gapAt(20000), 170);
-    expect(gen.gapAt(1e9), 170);
+    // Second ramp (C7): down to 160 px by 40 000 px, then constant.
+    expect(gen.gapAt(30000), 165);
+    expect(gen.gapAt(40000), 160);
+    expect(gen.gapAt(1e9), 160);
   });
 
   test('obstacle spacing ramps from 600 to 300 px', () {
     final gen = CaveGenerator(config, 1);
     expect(gen.obstacleSpacingAt(0), 600);
     expect(gen.obstacleSpacingAt(20000), 300);
-    expect(gen.obstacleSpacingAt(1e9), 300);
+    expect(gen.obstacleSpacingAt(40000), 200);
+    expect(gen.obstacleSpacingAt(1e9), 200);
   });
 
   test('walls respect the gap, margins and LCD grid', () {
     for (final c in sampleCave(7, 6000)) {
       final gap = c.bottom - c.top;
-      expect(gap, greaterThanOrEqualTo(config.minGap));
+      expect(gap, greaterThanOrEqualTo(config.lateMinGap));
       expect(gap, lessThanOrEqualTo(config.initialGap));
       expect(c.top, greaterThanOrEqualTo(config.playTop + config.edgeMargin));
       expect(
@@ -72,6 +76,14 @@ void main() {
 
   test('obstacles are 2 identical columns, sized and spaced per spec', () {
     final cave = sampleCave(3, 8000);
+    final late = sampleCave(3, 6000).skip(4000); // columns past 40 000 px
+    expect(
+      late
+          .where((c) => c.hasObstacle)
+          .every((c) => c.obstacleBottom - c.obstacleTop <= 80),
+      isTrue,
+      reason: 'blocks capped at gap − 80 in the narrowest tunnel',
+    );
     final starts = <int>[];
     for (var i = 0; i < cave.length; i++) {
       final c = cave[i];
@@ -109,9 +121,15 @@ void main() {
       expect(window, greaterThanOrEqualTo(config.minPassableHeight));
     }
     expect(starts.length, greaterThan(50));
+    // Late in the run blocks come more often than early on.
+    final early = starts.where((i) => i * config.columnWidth < 20000).length;
+    final lateCount = starts
+        .where((i) => i * config.columnWidth >= 60000)
+        .length;
+    expect(lateCount, greaterThan(early));
     for (var k = 1; k < starts.length; k++) {
       final spacing = (starts[k] - starts[k - 1]) * config.columnWidth;
-      expect(spacing, greaterThanOrEqualTo(config.minObstacleSpacing));
+      expect(spacing, greaterThanOrEqualTo(config.lateMinObstacleSpacing));
     }
   });
 

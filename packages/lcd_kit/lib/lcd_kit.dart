@@ -12,6 +12,7 @@ export 'src/licenses.dart';
 export 'src/local_store.dart';
 export 'src/palette.dart';
 export 'src/sprites.dart';
+export 'src/strings.dart';
 export 'src/arcade/arcade_game.dart';
 export 'src/arcade/arcade_view.dart';
 export 'src/arcade/input.dart';

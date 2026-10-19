@@ -27,6 +27,9 @@ class Config {
     this.initialGap = 300,
     this.minGap = 170,
     this.rampDistancePx = 20000,
+    this.lateRampDistancePx = 40000,
+    this.lateMinGap = 160,
+    this.lateMinObstacleSpacing = 200,
     this.obstacleWidth = 20,
     this.obstacleMinHeight = 50,
     this.obstacleMaxHeight = 90,
@@ -73,6 +76,14 @@ class Config {
 
   /// Scrolled px over which the gap and obstacle spacing ramp to their minimum.
   final double rampDistancePx;
+
+  /// Second ramp (decision C7): from [rampDistancePx] to this distance the
+  /// gap keeps narrowing to [lateMinGap] and blocks come every
+  /// [lateMinObstacleSpacing] px; speed never changes. Blocks are capped at
+  /// `gap − minPassableHeight`, so the passable window always remains.
+  final double lateRampDistancePx;
+  final double lateMinGap;
+  final double lateMinObstacleSpacing;
 
   final double obstacleWidth;
   final double obstacleMinHeight;
@@ -143,6 +154,20 @@ class Config {
       v.add('initialGap plus edge margins must fit the play area');
     }
     if (minGap > initialGap) v.add('minGap must be <= initialGap');
+    if (lateMinGap > minGap) v.add('lateMinGap must be <= minGap');
+    if (lateMinGap - obstacleMinHeight < minPassableHeight) {
+      v.add('lateMinGap - obstacleMinHeight must be >= minPassableHeight');
+    }
+    if (lateRampDistancePx <= rampDistancePx) {
+      v.add('lateRampDistancePx must be > rampDistancePx');
+    }
+    if (lateMinObstacleSpacing > minObstacleSpacing ||
+        lateMinObstacleSpacing <= obstacleWidth) {
+      v.add(
+        'lateMinObstacleSpacing must be in (obstacleWidth, '
+        'minObstacleSpacing]',
+      );
+    }
     if (obstacleWidth % columnWidth != 0) {
       v.add('obstacleWidth must be a whole number of columns');
     }
@@ -153,6 +178,7 @@ class Config {
       ('walkStep', walkStep),
       ('initialGap', initialGap),
       ('minGap', minGap),
+      ('lateMinGap', lateMinGap),
       ('obstacleMinHeight', obstacleMinHeight),
       ('obstacleHeightStep', obstacleHeightStep),
       ('heliX', heliX),

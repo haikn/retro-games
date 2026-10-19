@@ -16,7 +16,7 @@ void main() {
     return b;
   }
 
-  test('draws the well frame and 4x4 bricks with a 1-px gap', () {
+  test('draws the well frame and console bricks: border and centre dot', () {
     final a = arcade();
     a.core.debugSet(0, 19);
     final b = frame(a);
@@ -25,9 +25,11 @@ void main() {
     expect(b.isLit(30, 112), isTrue);
     final (x, y) = BlocksArcade.origin(0, 19);
     expect((x, y), (2, 107));
-    expect(b.isLit(x, y), isTrue);
-    expect(b.isLit(x + 3, y + 3), isTrue);
-    expect(b.isLit(x + 4, y), isFalse); // gap
+    expect(b.isLit(x, y), isTrue); // border corner
+    expect(b.isLit(x + 4, y + 4), isTrue); // opposite corner
+    expect(b.isLit(x + 2, y + 2), isTrue); // centre dot
+    expect(b.isLit(x + 1, y + 1), isFalse); // ring between border and dot
+    expect(b.isLit(x + 2, y + 1), isFalse);
   });
 
   test('shows the next piece and the level / lines texts', () {

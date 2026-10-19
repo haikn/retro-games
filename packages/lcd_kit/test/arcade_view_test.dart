@@ -55,6 +55,7 @@ void main() {
   Future<ArcadeGameViewState> pump(
     WidgetTester tester, {
     int? levels = 9,
+    Rect? pauseKey,
   }) async {
     await tester.runAsync(loadLcdFont);
     tester.view.physicalSize = const Size(800, 1600);
@@ -88,6 +89,7 @@ void main() {
             startHint: const ['Swipe to', 'start'],
             levels: levels,
             defaultLevel: 5,
+            pauseKey: pauseKey,
           ),
           player: player,
           seedSource: () => 7,
@@ -303,5 +305,52 @@ void main() {
     await pump(tester);
     await tester.tap(find.text('All games'));
     expect(exits, 1);
+  });
+
+  testWidgets('How to play shows a scrollbar only for long text', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.tap(find.text('How to play'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(LcdScrollbar), findsNothing); // one short paragraph
+  });
+
+  testWidgets('tapping the score bar pauses; the tap is not game input', (
+    tester,
+  ) async {
+    final s = await pump(tester);
+    s.newGame();
+    await tester.pump();
+    await tester.tapAt(const Offset(200, 600));
+    await tester.pump();
+    expect(s.phase, ArcadePhase.playing);
+    game.inputs.clear();
+    await tester.tapAt(const Offset(200, 15)); // HUD strip
+    await tester.pump();
+    expect(s.phase, ArcadePhase.paused);
+    expect(game.inputs.whereType<PressInput>(), isEmpty);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    expect(s.phase, ArcadePhase.ready);
+  });
+
+  testWidgets('a declared pause key is drawn and pauses', (tester) async {
+    final s = await pump(
+      tester,
+      pauseKey: const Rect.fromLTWH(285, 190, 100, 75),
+    );
+    s.newGame();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('pause-key')), findsOneWidget);
+    await tester.tapAt(const Offset(200, 600));
+    await tester.pump();
+    await tester.tapAt(const Offset(335, 225));
+    await tester.pump();
+    expect(s.phase, ArcadePhase.paused);
+    await tester.tap(find.text('Main menu')); // quit the run
+    await tester.pump();
+    expect(s.phase, ArcadePhase.menu);
   });
 }

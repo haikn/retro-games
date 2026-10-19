@@ -368,6 +368,7 @@ class LcdMenuScreen extends StatefulWidget {
     required this.items,
     this.trailing,
     this.boldTitle = false,
+    this.selectLabel = 'Select',
   });
 
   final LcdPalette palette;
@@ -378,14 +379,33 @@ class LcdMenuScreen extends StatefulWidget {
   final String? trailing;
   final bool boldTitle;
 
+  /// Soft-key label.
+  final String selectLabel;
+
   @override
   State<LcdMenuScreen> createState() => _LcdMenuScreenState();
 }
 
 class _LcdMenuScreenState extends State<LcdMenuScreen> {
   static const listTop = 55.0;
-  static const rowHeight = 60.0;
+  final _scroll = ScrollController();
   int _selected = 0;
+  double _fraction = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      final max = _scroll.position.maxScrollExtent;
+      setState(() => _fraction = max > 0 ? _scroll.offset / max : 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   void _activate(int i) {
     setState(() => _selected = i);
@@ -396,6 +416,14 @@ class _LcdMenuScreenState extends State<LcdMenuScreen> {
   Widget build(BuildContext context) {
     final p = widget.palette;
     final items = widget.items;
+    final size = LcdScreen.sizeOf(context);
+    // 11-LCD-px rows in landscape (5 fit above the soft key), 12 in portrait.
+    final rowHeight = size.height < 500 ? 55.0 : 60.0;
+    final available = size.height - listTop - 55; // above the soft key
+    final fits = items.length * rowHeight <= available;
+    final listHeight = fits
+        ? items.length * rowHeight
+        : (available / rowHeight).floor() * rowHeight;
     return Stack(
       children: [
         Positioned.fill(child: LcdBackground(palette: p)),
@@ -405,29 +433,39 @@ class _LcdMenuScreenState extends State<LcdMenuScreen> {
           bold: widget.boldTitle,
           trailing: widget.trailing ?? '${_selected + 1}/${items.length}',
         ),
-        for (var i = 0; i < items.length; i++)
-          Positioned(
-            left: 10,
-            top: listTop + i * rowHeight,
-            width: LcdScreen.sizeOf(context).width - 55,
-            height: rowHeight,
-            child: Semantics(
-              button: true,
-              selected: i == _selected,
-              label: items[i].label,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => setState(() => _selected = i),
-                onTap: () => _activate(i),
-                child: ColoredBox(
-                  color: i == _selected ? p.ink : const Color(0x00000000),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        items[i].label,
-                        style: LcdText.body(i == _selected ? p.lcd : p.ink),
+        Positioned(
+          left: 10,
+          top: listTop,
+          width: size.width - 55,
+          height: listHeight,
+          child: ScrollConfiguration(
+            behavior: const ScrollBehavior().copyWith(scrollbars: false),
+            child: ListView.builder(
+              controller: _scroll,
+              padding: EdgeInsets.zero,
+              itemExtent: rowHeight,
+              physics: fits
+                  ? const NeverScrollableScrollPhysics()
+                  : const ClampingScrollPhysics(),
+              itemCount: items.length,
+              itemBuilder: (context, i) => Semantics(
+                button: true,
+                selected: i == _selected,
+                label: items[i].label,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) => setState(() => _selected = i),
+                  onTap: () => _activate(i),
+                  child: ColoredBox(
+                    color: i == _selected ? p.ink : const Color(0x00000000),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          items[i].label,
+                          style: LcdText.body(i == _selected ? p.lcd : p.ink),
+                        ),
                       ),
                     ),
                   ),
@@ -435,13 +473,20 @@ class _LcdMenuScreenState extends State<LcdMenuScreen> {
               ),
             ),
           ),
-        LcdScrollbar(
-          palette: p,
-          top: listTop,
-          height: rowHeight * items.length,
-          fraction: items.length > 1 ? _selected / (items.length - 1) : 0,
         ),
-        SoftKey(label: 'Select', palette: p, onTap: () => _activate(_selected)),
+        // Scrollbar only when the list is longer than the screen.
+        if (!fits)
+          LcdScrollbar(
+            palette: p,
+            top: listTop,
+            height: listHeight,
+            fraction: _fraction,
+          ),
+        SoftKey(
+          label: widget.selectLabel,
+          palette: p,
+          onTap: () => _activate(_selected),
+        ),
       ],
     );
   }

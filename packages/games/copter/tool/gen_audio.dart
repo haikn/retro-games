@@ -13,4 +13,11 @@ void main() {
       ..writeAsBytesSync(encodeWav(make()));
     stdout.writeln('Wrote ${file.path} (${file.lengthSync()} bytes)');
   }
+  // Rotor variants to compare by ear (not bundled in the app).
+  final variants = Directory('tool/rotor_variants')..createSync();
+  for (final name in rotorVariants.keys) {
+    final file = File('${variants.path}/$name.wav')
+      ..writeAsBytesSync(encodeWav(rotorVariant(name)));
+    stdout.writeln('Wrote ${file.path}${name == defaultRotor ? ' (= rotor.wav)' : ''}');
+  }
 }

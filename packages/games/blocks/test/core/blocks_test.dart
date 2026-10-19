@@ -183,4 +183,50 @@ void main() {
     expect(run(4), run(4));
     expect(run(4), isNot(run(5)));
   });
+
+  group('lock delay (F3)', () {
+    /// An O piece resting on the floor, not yet locked.
+    BlocksGame grounded() {
+      final g = game()..debugSetPiece(PieceKind.o);
+      while (g.piece.y < 18) {
+        g.softDrop();
+      }
+      return g;
+    }
+
+    test('a landed piece locks after 30 ticks', () {
+      final g = grounded();
+      final kind = g.piece.kind;
+      ticks(g, 29);
+      expect(g.piece.kind, kind);
+      expect(g.filled(4, 19), isFalse);
+      g.tick();
+      expect(g.filled(4, 19), isTrue);
+    });
+
+    test('moving or rotating on the floor restarts the delay', () {
+      final g = grounded();
+      ticks(g, 25);
+      g.moveLeft();
+      ticks(g, 25);
+      expect(g.filled(3, 19), isFalse); // still sliding
+      g.moveLeft();
+      ticks(g, 29);
+      expect(g.filled(2, 19), isFalse);
+      g.tick();
+      expect(g.filled(2, 19), isTrue);
+    });
+
+    test('at most 15 restarts per piece', () {
+      final g = grounded();
+      for (var i = 0; i < 15; i++) {
+        ticks(g, 20);
+        i.isEven ? g.moveLeft() : g.moveRight();
+      }
+      ticks(g, 20);
+      g.moveLeft(); // 16th move: no restart
+      ticks(g, 10);
+      expect(g.takeEvents(), contains('lock'));
+    });
+  });
 }

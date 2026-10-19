@@ -12,6 +12,7 @@ import '../lcd_text.dart';
 import '../lcd_widgets.dart';
 import '../leaderboard_service.dart';
 import '../palette.dart';
+import '../strings.dart';
 import 'arcade_game.dart';
 import 'input.dart';
 
@@ -228,11 +229,12 @@ class ArcadeGameViewState extends State<ArcadeGameView>
 
   Future<void> showOnlineScores() async {
     unawaited(_audio.click());
+    final t = LcdStrings.of(context);
     final message = switch (await widget.host.leaderboard.show()) {
       LeaderboardResult.shown => null,
-      LeaderboardResult.signInFailed => 'Sign-in failed',
-      LeaderboardResult.showFailed => 'Try again later',
-      LeaderboardResult.unavailable => 'Not available',
+      LeaderboardResult.signInFailed => t.signInFailed,
+      LeaderboardResult.showFailed => t.tryAgainLater,
+      LeaderboardResult.unavailable => t.notAvailable,
     };
     if (message == null || !mounted) return;
     _noticeTimer?.cancel();
@@ -266,12 +268,30 @@ class ArcadeGameViewState extends State<ArcadeGameView>
     }
   }
 
+  /// Height of the HUD strip, which pauses when tapped.
+  static const hudHeight = 45.0;
+
+  /// True from a HUD press until its gesture ends, so the rest of that
+  /// gesture is not sent to the game.
+  bool _pauseFromHud = false;
+
   void onInput(GameInput input) {
+    if (input is ReleaseInput && _pauseFromHud) {
+      _pauseFromHud = false;
+      return;
+    }
     switch (_phase) {
       case ArcadePhase.ready:
         if (input is PressInput) setState(() => _phase = ArcadePhase.playing);
         game.input(input);
       case ArcadePhase.playing:
+        // The HUD strip (top 45 px: text and rule) is the pause key.
+        if (input is PressInput && input.position.dy < hudHeight) {
+          _pauseFromHud = true;
+          _go(ArcadePhase.paused);
+          return;
+        }
+        if (_pauseFromHud) return; // rest of the pausing gesture
         game.input(input);
       case ArcadePhase.over:
         if (input is PressInput && crashTicks >= restartTicks) _restart();
@@ -309,6 +329,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
 
   List<Widget> _layers(LcdPalette p) {
     final spec = widget.spec;
+    final t = LcdStrings.of(context);
     return [
       if (_gameVisible) ...[
         ArcadeGestureLayer(
@@ -325,30 +346,36 @@ class ArcadeGameViewState extends State<ArcadeGameView>
           ),
         ),
       ],
+      if (spec.pauseKey != null &&
+          (_phase == ArcadePhase.ready || _phase == ArcadePhase.playing))
+        _pauseButton(p, spec.pauseKey!),
       if (_phase == ArcadePhase.ready) ...[
         _dialog(p, [
           for (final line in spec.startHint)
             Blink(child: Text(line, style: LcdText.body(p.ink))),
         ]),
-        SoftKey(label: 'Menu', palette: p, plate: true, onTap: _toMenu),
+        SoftKey(label: t.menu, palette: p, plate: true, onTap: _toMenu),
       ],
       if (_phase == ArcadePhase.over && crashTicks >= gameOverTicks) ...[
         _dialog(p, [
           Text(
-            'Game over!',
+            t.gameOver,
             style: LcdText.body(p.ink).copyWith(fontWeight: FontWeight.w700),
           ),
-          Text('Score ${pad5(game.score)}', style: LcdText.body(p.ink)),
+          Text(
+            LcdStrings.fill(t.score, pad5(game.score)),
+            style: LcdText.body(p.ink),
+          ),
           if (newBest)
-            Blink(child: Text('New best!', style: LcdText.body(p.ink)))
+            Blink(child: Text(t.newBest, style: LcdText.body(p.ink)))
           else
             Text(
-              'Best ${pad5(widget.host.store.best)}',
+              LcdStrings.fill(t.best, pad5(widget.host.store.best)),
               style: LcdText.body(p.ink),
             ),
-          Text('Tap to play', style: LcdText.body(p.ink)),
+          Text(t.tapToPlay, style: LcdText.body(p.ink)),
         ]),
-        SoftKey(label: 'Menu', palette: p, plate: true, onTap: _toMenu),
+        SoftKey(label: t.menu, palette: p, plate: true, onTap: _toMenu),
       ],
       if (_phase == ArcadePhase.menu) _menu(p),
       if (_phase == ArcadePhase.paused) _paused(p),
@@ -359,7 +386,52 @@ class ArcadeGameViewState extends State<ArcadeGameView>
 
   void _toMenu() => _go(ArcadePhase.menu);
 
+  /// `II` in a 1-LCD-px box.
+  Widget _pauseButton(LcdPalette p, Rect rect) {
+    final ink = inverted ? p.lcd : p.ink;
+    return Positioned.fromRect(
+      key: const ValueKey('pause-key'),
+      rect: rect,
+      child: Semantics(
+        button: true,
+        label: LcdStrings.of(context).pause,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (_phase == ArcadePhase.playing) {
+              _go(ArcadePhase.paused);
+            }
+          },
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: ink, width: lcdPixel),
+            ),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 10,
+                    height: 25,
+                    child: ColoredBox(color: ink),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 10,
+                    height: 25,
+                    child: ColoredBox(color: ink),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _hud(LcdPalette p) {
+    final t = LcdStrings.of(context);
     final ink = inverted ? p.lcd : p.ink;
     final style = LcdText.body(ink);
     final best = math.max(widget.host.store.best, game.score);
@@ -376,7 +448,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(pad5(game.score), style: style),
-            Text('HI ${pad5(best)}', style: style),
+            Text(LcdStrings.fill(t.hi, pad5(best)), style: style),
           ],
         ),
       ),
@@ -415,42 +487,50 @@ class ArcadeGameViewState extends State<ArcadeGameView>
 
   Widget _menu(LcdPalette p) {
     final spec = widget.spec;
+    final t = LcdStrings.of(context);
     return _blocking(
       LcdMenuScreen(
         key: const ValueKey('menu'),
         palette: p,
         title: spec.title,
         boldTitle: true,
+        selectLabel: t.select,
         items: [
-          LcdMenuItem('New game', newGame),
-          if (spec.levels != null) LcdMenuItem('Level: $level', cycleLevel),
-          LcdMenuItem('Top score', () => _go(ArcadePhase.topScore)),
+          LcdMenuItem(t.newGame, newGame),
+          if (spec.levels != null)
+            LcdMenuItem(LcdStrings.fill(t.level, level), cycleLevel),
+          LcdMenuItem(t.topScore, () => _go(ArcadePhase.topScore)),
           LcdMenuItem(_soundLabel, toggleSound),
           // `Instructions` (330 px) does not fit a portrait menu row.
-          LcdMenuItem('How to play', () => _go(ArcadePhase.instructions)),
-          LcdMenuItem('All games', exitToLauncher),
+          LcdMenuItem(t.howToPlay, () => _go(ArcadePhase.instructions)),
+          LcdMenuItem(t.allGames, exitToLauncher),
         ],
       ),
     );
   }
 
-  Widget _paused(LcdPalette p) => _blocking(
-    LcdMenuScreen(
-      key: const ValueKey('paused'),
-      palette: p,
-      title: 'Paused',
-      boldTitle: true,
-      trailing: pad5(game.score),
-      items: [
-        LcdMenuItem('Continue', () => _go(ArcadePhase.ready)),
-        LcdMenuItem('New game', newGame),
-        LcdMenuItem(_soundLabel, toggleSound),
-        LcdMenuItem('Main menu', _toMenu),
-      ],
-    ),
-  );
+  Widget _paused(LcdPalette p) {
+    final t = LcdStrings.of(context);
+    return _blocking(
+      LcdMenuScreen(
+        key: const ValueKey('paused'),
+        palette: p,
+        title: t.paused,
+        boldTitle: true,
+        selectLabel: t.select,
+        trailing: pad5(game.score),
+        items: [
+          LcdMenuItem(t.continueRun, () => _go(ArcadePhase.ready)),
+          LcdMenuItem(t.newGame, newGame),
+          LcdMenuItem(_soundLabel, toggleSound),
+          LcdMenuItem(t.mainMenu, _toMenu),
+        ],
+      ),
+    );
+  }
 
   Widget _topScore(LcdPalette p) {
+    final t = LcdStrings.of(context);
     final w = _size.width;
     final numberTop = (_size.height * 0.2 / lcdPixel).round() * lcdPixel;
     // `Online scores` is 360 px wide in Silkscreen.
@@ -459,7 +539,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
       Stack(
         children: [
           Positioned.fill(child: LcdBackground(palette: p)),
-          LcdHeader(palette: p, title: 'Top score:'),
+          LcdHeader(palette: p, title: t.topScoreTitle),
           Positioned(
             left: 0,
             right: 0,
@@ -478,10 +558,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
             top: numberTop + 120,
             height: 50,
             child: Center(
-              child: Text(
-                _notice ?? 'On this phone',
-                style: LcdText.body(p.ink),
-              ),
+              child: Text(_notice ?? t.onThisPhone, style: LcdText.body(p.ink)),
             ),
           ),
           Positioned(
@@ -491,20 +568,20 @@ class ArcadeGameViewState extends State<ArcadeGameView>
             height: 60,
             child: Semantics(
               button: true,
-              label: 'Online scores',
+              label: t.onlineScores,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: showOnlineScores,
                 child: ColoredBox(
                   color: p.ink,
                   child: Center(
-                    child: Text('Online scores', style: LcdText.body(p.lcd)),
+                    child: Text(t.onlineScores, style: LcdText.body(p.lcd)),
                   ),
                 ),
               ),
             ),
           ),
-          SoftKey(label: 'Back', palette: p, onTap: _toMenu),
+          SoftKey(label: t.back, palette: p, onTap: _toMenu),
         ],
       ),
     );
@@ -537,6 +614,7 @@ class _InstructionsScreen extends StatefulWidget {
 class _InstructionsScreenState extends State<_InstructionsScreen> {
   final _scroll = ScrollController();
   double _fraction = 0;
+  bool _overflows = false;
 
   @override
   void initState() {
@@ -562,29 +640,52 @@ class _InstructionsScreenState extends State<_InstructionsScreen> {
     return Stack(
       children: [
         Positioned.fill(child: LcdBackground(palette: p)),
-        LcdHeader(palette: p, title: 'How to play', bold: true),
+        LcdHeader(
+          palette: p,
+          title: LcdStrings.of(context).howToPlay,
+          bold: true,
+        ),
         Positioned(
           left: 25,
           top: 60,
           width: size.width - 75,
           height: height,
-          child: ScrollConfiguration(
-            behavior: const ScrollBehavior().copyWith(scrollbars: false),
-            child: ListView(
-              controller: _scroll,
-              padding: EdgeInsets.zero,
-              children: [
-                for (final text in widget.paragraphs)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 45),
-                    child: Text(text, style: style),
-                  ),
-              ],
+          child: NotificationListener<ScrollMetricsNotification>(
+            onNotification: (n) {
+              final overflows = n.metrics.maxScrollExtent > 0;
+              if (overflows != _overflows) {
+                setState(() => _overflows = overflows);
+              }
+              return false;
+            },
+            child: ScrollConfiguration(
+              behavior: const ScrollBehavior().copyWith(scrollbars: false),
+              child: ListView(
+                controller: _scroll,
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final text in widget.paragraphs)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 45),
+                      child: Text(text, style: style),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-        LcdScrollbar(palette: p, top: 60, height: height, fraction: _fraction),
-        SoftKey(label: 'Back', palette: p, onTap: widget.onBack),
+        if (_overflows)
+          LcdScrollbar(
+            palette: p,
+            top: 60,
+            height: height,
+            fraction: _fraction,
+          ),
+        SoftKey(
+          label: LcdStrings.of(context).back,
+          palette: p,
+          onTap: widget.onBack,
+        ),
       ],
     );
   }

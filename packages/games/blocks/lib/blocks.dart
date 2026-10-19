@@ -66,10 +66,13 @@ class BlocksModule extends GameModule {
           'most.',
       'Every 10 rows the level goes up and pieces fall faster.',
       'The game ends when the stack reaches the top.',
+      'Tap II or the score bar to pause.',
     ],
     startHint: const ['Tap to', 'start'],
     levels: 9,
     defaultLevel: 1,
+    // Side panel under NEXT: LCD x 57–76, y 38–52 (F4).
+    pauseKey: Rect.fromLTWH(285, 190, 100, 75),
   );
 
   @override
@@ -77,7 +80,8 @@ class BlocksModule extends GameModule {
       ArcadeGameView(host: host, spec: spec);
 }
 
-/// Draws a [BlocksGame] on the portrait LCD (canvas board 4) and maps
+/// Draws a [BlocksGame] on the portrait LCD (canvas board 4, console-style
+/// bricks) and maps
 /// gestures: tap = rotate, horizontal drag = move a column per 25 px, drag
 /// down = soft drop a row per 25 px, flick down = hard drop.
 class BlocksArcade extends ArcadeGame {
@@ -177,6 +181,16 @@ class BlocksArcade extends ArcadeGame {
     return s;
   }
 
+  /// A handheld-console brick (F5): 1-px square border with a centre dot,
+  /// filling the 5×5 cell.
+  static void brick(LcdBuffer b, int x, int y) {
+    b.fillRect(x, y, 5, 1);
+    b.fillRect(x, y + 4, 5, 1);
+    b.fillRect(x, y + 1, 1, 3);
+    b.fillRect(x + 4, y + 1, 1, 3);
+    b.set(x + 2, y + 2);
+  }
+
   @override
   void draw(LcdBuffer b) {
     b.fillRect(0, 8, b.width, 1); // HUD rule
@@ -196,7 +210,7 @@ class BlocksArcade extends ArcadeGame {
         final on = isClearing ? blinkOn : g.filled(c, r);
         if (on) {
           final (x, y) = origin(c, r);
-          b.fillRect(x, y, 4, 4);
+          brick(b, x, y);
         }
       }
     }
@@ -204,12 +218,12 @@ class BlocksArcade extends ArcadeGame {
       for (final (c, r) in g.pieceCells()) {
         if (r < 0) continue;
         final (x, y) = origin(c, r);
-        b.fillRect(x, y, 4, 4);
+        brick(b, x, y);
       }
     }
     // Next piece, in its rotation-0 shape, under the NEXT label.
     for (final (c, r) in shapeCells(g.next, 0)) {
-      b.fillRect(57 + 5 * c, 22 + 5 * r, 4, 4);
+      brick(b, 57 + 5 * c, 22 + 5 * r);
     }
   }
 }

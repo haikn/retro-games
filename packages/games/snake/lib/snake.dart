@@ -48,10 +48,11 @@ class SnakeModule extends GameModule {
     sounds: const ['eat.wav', 'bonus.wav', 'crash.wav'],
     instructions: const [
       'Swipe up, down, left or right to steer.',
-      'Eat food to grow and score. Every fifth food brings a bonus bug for '
-          'five seconds.',
+      'Eat food to grow and score. Every fifth food brings a bomb for eight '
+          'seconds: the sooner you eat it, the more it is worth.',
       'The walls wrap around. Do not bite your own tail.',
       'Higher levels are faster and score more.',
+      'Tap the score bar to pause.',
     ],
     startHint: const ['Swipe to', 'start'],
     levels: 9,
@@ -71,8 +72,47 @@ class SnakeArcade extends ArcadeGame {
 
   SnakeGame get core => _game!;
 
-  /// Field cell (x, y) → its top-left LCD pixel.
-  static (int, int) origin(Cell c) => (2 + 4 * c.x, 11 + 4 * c.y);
+  /// Field cell (x, y) → its top-left LCD pixel (border at LCD y 13–158).
+  static (int, int) origin(Cell c) => (2 + 4 * c.x, 14 + 4 * c.y);
+
+  /// Head (F6): a full 4×4 cell, facing right here; rotated for the
+  /// heading. Eye at (1, 1), mouth notch on the front edge.
+  static const _headRight = ['####', '#.##', '###.', '####'];
+
+  static bool _headPixel(Heading h, int x, int y) {
+    // Map (x, y) of the drawn cell back into the right-facing grid.
+    final (u, v) = switch (h) {
+      Heading.right => (x, y),
+      Heading.left => (3 - x, y),
+      Heading.down => (y, 3 - x),
+      Heading.up => (3 - y, x),
+    };
+    return _headRight[v][u] == '#';
+  }
+
+  /// Bomb (F7): 8×8 over its 2×2 cells; the fuse spark flickers.
+  static final bombFrames = [
+    Sprite1.parse(const [
+      '.....#.#',
+      '....#.#.',
+      '...##...',
+      '..####..',
+      '.######.',
+      '.##.###.',
+      '.######.',
+      '..####..',
+    ]),
+    Sprite1.parse(const [
+      '......#.',
+      '....#..#',
+      '...##...',
+      '..####..',
+      '.######.',
+      '.##.###.',
+      '.######.',
+      '..####..',
+    ]),
+  ];
 
   @override
   void start({required int level, required int seed}) {
@@ -117,19 +157,25 @@ class SnakeArcade extends ArcadeGame {
   void draw(LcdBuffer b) {
     final g = _game;
     b.fillRect(0, 8, b.width, 1); // HUD rule
-    // Field border: 1 LCD px around the 76×148 interior at (2, 11).
-    b.fillRect(1, 10, 78, 1);
-    b.fillRect(1, 159, 78, 1);
-    b.fillRect(1, 10, 1, 150);
-    b.fillRect(78, 10, 1, 150);
+    // Field border: 1 LCD px around the 76×144 interior at (2, 14), with a
+    // 1-px margin at the sides and bottom (F8).
+    b.fillRect(1, 13, 78, 1);
+    b.fillRect(1, 158, 78, 1);
+    b.fillRect(1, 13, 1, 146);
+    b.fillRect(78, 13, 1, 146);
     if (g == null) return;
 
     final body = g.body;
     for (var i = 0; i < body.length; i++) {
       final (x, y) = origin(body[i]);
-      b.fillRect(x, y, 3, 3);
       if (i == 0) {
-        b.clearRect(x + 1, y + 1, 1, 1); // eye
+        for (var py = 0; py < 4; py++) {
+          for (var px = 0; px < 4; px++) {
+            if (_headPixel(g.heading, px, py)) b.set(x + px, y + py);
+          }
+        }
+      } else {
+        b.fillRect(x, y, 3, 3);
       }
       if (i + 1 < body.length) {
         final n = body[i + 1];
@@ -149,14 +195,10 @@ class SnakeArcade extends ArcadeGame {
       b.fillRect(x, y + 1, 3, 1);
     }
     final bonus = g.bonus;
-    // The bug blinks during its last second.
-    if (bonus != null && (g.bonusLeft > 60 || g.bonusLeft % 10 < 5)) {
+    // The bomb blinks during its last 2 s.
+    if (bonus != null && (g.bonusLeft > 120 || (g.bonusLeft ~/ 8).isOdd)) {
       final (x, y) = origin(bonus);
-      b.set(x, y);
-      b.set(x + 2, y);
-      b.set(x + 1, y + 1);
-      b.set(x, y + 2);
-      b.set(x + 2, y + 2);
+      b.blit(bombFrames[(g.ticks ~/ 8) % 2], x, y);
     }
   }
 }

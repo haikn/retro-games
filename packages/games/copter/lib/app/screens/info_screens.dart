@@ -85,6 +85,7 @@ class InstructionsScreen extends StatefulWidget {
 class _InstructionsScreenState extends State<InstructionsScreen> {
   final _scroll = ScrollController();
   double _fraction = 0;
+  bool _overflows = false;
 
   @override
   void initState() {
@@ -114,22 +115,32 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
           top: 60,
           width: 725,
           height: 270,
-          child: ScrollConfiguration(
-            behavior: const ScrollBehavior().copyWith(scrollbars: false),
-            child: ListView(
-              controller: _scroll,
-              padding: EdgeInsets.zero,
-              children: [
-                for (final text in InstructionsScreen.paragraphs)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 45),
-                    child: Text(text, style: style),
-                  ),
-              ],
+          child: NotificationListener<ScrollMetricsNotification>(
+            onNotification: (n) {
+              final overflows = n.metrics.maxScrollExtent > 0;
+              if (overflows != _overflows) {
+                setState(() => _overflows = overflows);
+              }
+              return false;
+            },
+            child: ScrollConfiguration(
+              behavior: const ScrollBehavior().copyWith(scrollbars: false),
+              child: ListView(
+                controller: _scroll,
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final text in InstructionsScreen.paragraphs)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 45),
+                      child: Text(text, style: style),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-        LcdScrollbar(palette: p, top: 60, height: 270, fraction: _fraction),
+        if (_overflows)
+          LcdScrollbar(palette: p, top: 60, height: 270, fraction: _fraction),
         SoftKey(label: 'Back', palette: p, onTap: widget.flow.openMenu),
       ],
     );

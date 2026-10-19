@@ -63,10 +63,13 @@ bool pilot(GameSimulation sim) {
 void main() {
   // The pilot is a heuristic, so this is a smoke check that the band model
   // and real physics agree; the exact guarantee is in passability_oracle_test.
+  // Since the second ramp (C7) the run gets much denser after distance 2 000:
+  // the pilot then mostly fails beyond 3 500, although the exhaustive search
+  // still finds a way through on those seeds.
   test(
-    'look-ahead pilot reaches distance 5 000 on at least 85 of 100 seeds',
+    'look-ahead pilot reaches distance 3 000 on at least 90 of 100 seeds',
     () {
-      const goal = 5000;
+      const goal = 3000;
       final failures = <String>[];
       for (var seed = 1; seed <= 100; seed++) {
         final sim = GameSimulation(seed: seed, config: const Config());
@@ -79,7 +82,7 @@ void main() {
       }
       expect(
         failures.length,
-        lessThanOrEqualTo(15),
+        lessThanOrEqualTo(10),
         reason: failures.join('\n'),
       );
     },

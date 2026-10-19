@@ -20,25 +20,55 @@ void main() {
     for (var x = 0; x < 80; x++) {
       expect(b.isLit(x, 8), isTrue);
     }
-    expect(b.isLit(1, 10), isTrue);
-    expect(b.isLit(78, 159), isTrue);
+    expect(b.isLit(1, 13), isTrue);
+    expect(b.isLit(78, 158), isTrue);
     expect(b.isLit(1, 100), isTrue);
     expect(b.isLit(78, 100), isTrue);
+    // Equal 1-px margins left, right and bottom (F8).
     expect(b.isLit(0, 100), isFalse);
     expect(b.isLit(79, 100), isFalse);
+    expect(b.isLit(40, 159), isFalse);
   });
 
-  test('segments are 3×3 joined into a line; the head has an eye', () {
+  test('body segments are 3×3 joined into a line; the head is a bigger '
+      '4×4 with an eye and a mouth facing its heading', () {
     final a = SnakeArcade()..start(level: 5, seed: 1);
     final b = frame(a);
     final (hx, hy) = SnakeArcade.origin(const Cell(7, 18));
-    expect(b.isLit(hx, hy), isTrue);
+    expect(b.isLit(hx + 3, hy), isTrue); // 4 px wide (body is 3)
+    expect(b.isLit(hx, hy + 3), isTrue); // 4 px tall
     expect(b.isLit(hx + 1, hy + 1), isFalse); // eye
+    expect(b.isLit(hx + 3, hy + 2), isFalse); // mouth at the front (right)
     expect(b.isLit(hx - 1, hy + 1), isTrue); // joined to the next segment
     final (tx, ty) = SnakeArcade.origin(const Cell(3, 18));
     expect(b.isLit(tx + 1, ty + 1), isTrue); // body is solid
+    expect(b.isLit(tx + 1, ty + 3), isFalse); // body is 3 thick
     expect(b.isLit(tx - 1, ty + 1), isFalse); // nothing before the tail
-    expect(b.isLit(hx + 3, hy + 1), isFalse); // nothing ahead of the head
+  });
+
+  test('the head turns with the snake', () {
+    final a = SnakeArcade()..start(level: 5, seed: 1);
+    a.input(const SwipeInput(Dir.up));
+    for (var i = 0; i < a.core.stepTicks; i++) {
+      a.tick();
+    }
+    final b = frame(a);
+    final (hx, hy) = SnakeArcade.origin(a.core.body.first);
+    expect(b.isLit(hx + 2, hy), isFalse); // mouth on the top edge
+    expect(b.isLit(hx + 3, hy + 2), isTrue); // no longer on the right
+  });
+
+  test('the bomb is an 8×8 sprite over 2×2 cells and its fuse flickers', () {
+    final a = SnakeArcade()..start(level: 5, seed: 1);
+    a.core.debugPlaceBonus(const Cell(10, 4));
+    final (x, y) = SnakeArcade.origin(const Cell(10, 4));
+    final f0 = frame(a);
+    expect(f0.isLit(x + 3, y + 6), isTrue); // body
+    for (var i = 0; i < 8; i++) {
+      a.tick();
+    }
+    final f1 = frame(a);
+    expect(f1.isLit(x + 7, y), isNot(f0.isLit(x + 7, y))); // spark moved
   });
 
   test('food is a plus inside its cell', () {
