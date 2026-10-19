@@ -135,10 +135,12 @@ class _LauncherScreenState extends State<LauncherScreen> {
         ),
         for (var i = 0; i < entries.length && i < 4; i++)
           Positioned(
+            // 10-px gaps between tiles both ways (tiles at y 60–395 and
+            // 405–740, above the soft key at 745).
             left: i.isEven ? 5 : 205,
             top: i < 2 ? 60 : 405,
             width: 190,
-            height: 325,
+            height: 335,
             child: _Tile(
               entry: entries[i],
               palette: p,

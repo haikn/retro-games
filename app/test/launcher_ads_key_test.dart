@@ -44,4 +44,22 @@ void main() {
     final lcd = tester.getRect(find.byType(LcdViewport));
     expect(banner.top, greaterThanOrEqualTo(lcd.bottom));
   });
+
+  testWidgets('tiles have the same gap across and down', (tester) async {
+    await pump(tester);
+    Rect tile(String title) => tester.getRect(
+      find
+          .ancestor(of: find.text(title), matching: find.byType(DecoratedBox))
+          .first,
+    );
+    final copter = tile('Copter');
+    final snake = tile('Snake');
+    final blocks = tile('Blocks');
+    final across = snake.left - copter.right;
+    final down = blocks.top - copter.bottom;
+    expect(across, greaterThan(0));
+    expect(down, closeTo(across, 0.01));
+    final select = tester.getRect(find.text('Select'));
+    expect(blocks.bottom, lessThanOrEqualTo(select.top));
+  });
 }
