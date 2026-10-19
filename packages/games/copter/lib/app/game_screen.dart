@@ -122,7 +122,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     // Open-source licences (spec: Store & Compliance).
                     onLongPress: () => showLicensePage(
                       context: context,
-                      applicationName: 'Cave Copter',
+                      applicationName: 'Retro LCD Games',
                     ),
                     child: fullScreen,
                   )

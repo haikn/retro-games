@@ -1,4 +1,4 @@
-/// Snake: the classic phone game, as an LCD Arcade module.
+/// Snake: the classic phone game, as a Retro LCD Games module.
 library;
 
 import 'package:flutter/widgets.dart';

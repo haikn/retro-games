@@ -1,5 +1,5 @@
 name: lcd_arcade
-description: "LCD Arcade (working name): four retro LCD games in one app."
+description: "Retro LCD Games: four retro LCD games in one app."
 publish_to: none
 version: 1.0.0+1
 resolution: workspace

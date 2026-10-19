@@ -12,7 +12,7 @@ What the code does:
 
 ## 1. Firebase project (≈ 15 min)
 
-Use the final app ID from decision C2 if it's decided. Firebase apps are registered per app ID.
+Firebase apps are registered per app ID: `com.nhk.retrolcdgames` on both platforms (decision C2).
 
 1. https://console.firebase.google.com → **Add project** (Google Analytics can stay off).
 2. Install the tools once: `dart pub global activate flutterfire_cli` and `npm install -g firebase-tools`. Then run `firebase login`.

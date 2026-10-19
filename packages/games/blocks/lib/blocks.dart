@@ -1,4 +1,4 @@
-/// Blocks: falling-block puzzle, as an LCD Arcade module.
+/// Blocks: falling-block puzzle, as a Retro LCD Games module.
 ///
 /// Not cleared for release (collection decision C4: IP review pending), so
 /// release builds show it as "Coming soon".

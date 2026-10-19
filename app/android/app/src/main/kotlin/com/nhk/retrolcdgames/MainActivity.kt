@@ -1,4 +1,4 @@
-package com.nhk.cave_copter
+package com.nhk.retrolcdgames
 
 import io.flutter.embedding.android.FlutterActivity
 

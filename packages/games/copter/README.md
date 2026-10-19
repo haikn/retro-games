@@ -1,6 +1,6 @@
 # Copter (formerly Cave Copter)
 
-Retro monochrome-LCD remake of the classic one-touch helicopter cave game; one of the four games in the LCD Arcade collection (see the [collection spec](../../../docs/specs/2026-10-18-lcd-arcade-design.md)). The app itself lives in [`app/`](../../../app/).
+Retro monochrome-LCD remake of the classic one-touch helicopter cave game; one of the four games in the Retro LCD Games collection (see the [collection spec](../../../docs/specs/2026-10-18-lcd-arcade-design.md)). The app itself lives in [`app/`](../../../app/).
 
 - Spec: [docs/superpowers/specs/2026-10-14-helicopter-game-design.md](docs/superpowers/specs/2026-10-14-helicopter-game-design.md) (rev 1.3)
 - Plan: [docs/superpowers/plans/2026-10-14-helicopter-game-plan.md](docs/superpowers/plans/2026-10-14-helicopter-game-plan.md)

@@ -1,4 +1,4 @@
-/// Copter: the one-touch helicopter cave game, as an LCD Arcade module.
+/// Copter: the one-touch helicopter cave game, as a Retro LCD Games module.
 library;
 
 import 'dart:async';

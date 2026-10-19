@@ -1,4 +1,4 @@
-/// Retro monochrome-LCD toolkit shared by the LCD Arcade games.
+/// Retro monochrome-LCD toolkit shared by the Retro LCD Games collection.
 library;
 
 export 'src/audio_service.dart';

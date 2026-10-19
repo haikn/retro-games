@@ -1,4 +1,4 @@
-/// Hop: endless road-and-river crossing, as an LCD Arcade module.
+/// Hop: endless road-and-river crossing, as a Retro LCD Games module.
 library;
 
 import 'dart:math' as math;

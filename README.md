@@ -1,6 +1,6 @@
 # Retro Games
 
-A collection of small retro-style mobile games in a monochrome phone-LCD style, planned as one app ("LCD Arcade", working name) with a launcher.
+A collection of small retro-style mobile games in a monochrome phone-LCD style, in one app, **Retro LCD Games** (`com.nhk.retrolcdgames`), with a launcher.
 
 | Game | Orientation | Status | Docs |
 |---|---|---|---|

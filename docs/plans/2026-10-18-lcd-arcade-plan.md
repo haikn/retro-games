@@ -6,7 +6,7 @@ Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-
 
 | Milestone | State |
 |---|---|
-| A0 Decisions | **Open**: C2 (collection name, app id), C4 (Blocks IP review) |
+| A0 Decisions | C2 decided (Retro LCD Games, `com.nhk.retrolcdgames`); **open**: C4 (Blocks IP review) |
 | A1 Collection shell | Done (workspace, lcd_kit, launcher, orientation switching) |
 | A2 Snake | Done |
 | A3 Hop | Done |
@@ -44,7 +44,7 @@ Assumptions: one developer, ideal days; store review and legal review time are e
 
 | # | Task | Done when |
 |---|---|---|
-| ⬜ 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
+| ✅ 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
 | ⬜ 0.2 | Send Blocks (C4) for IP review with the canvas board and the rules section | Review requested; answer expected before A4 |
 | ⬜ 0.3 | Confirm Hop presentation rules (C5) | Spec updated |
 

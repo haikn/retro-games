@@ -1,4 +1,4 @@
-// Renders the LCD Arcade app icon: the launcher's 2×2 game tiles. Run from
+// Renders the Retro LCD Games app icon: the launcher's 2×2 game tiles. Run from
 // app/, then regenerate the platform icons (and re-run `flutter test`: the
 // platform guard tests catch settings the icon tool has reverted before):
 //   dart run tool/gen_icon.dart

@@ -190,7 +190,7 @@ class LcdArcadeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LCD Arcade',
+      title: 'Retro LCD Games',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(scaffoldBackgroundColor: palette.bezel),
       home: Builder(
