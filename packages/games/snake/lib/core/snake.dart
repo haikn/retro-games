@@ -24,11 +24,16 @@ class Cell {
 /// Field size and rules (collection spec: Snake).
 abstract final class SnakeRules {
   static const cols = 19;
-  static const rows = 37;
+
+  /// 36 rows leave a bottom margin equal to the side margins (F8).
+  static const rows = 36;
   static const startLength = 5;
   static const maxQueuedTurns = 2;
   static const bonusEvery = 5;
-  static const bonusTicks = 300; // 5 s at 60 Hz
+
+  /// The bomb (F7) lasts 8 s and covers 2×2 cells.
+  static const bonusTicks = 480;
+  static const bonusSize = 2;
 }
 
 /// Ticks between steps: 250 ms at level 1 down to 50 ms at level 9.
@@ -63,6 +68,8 @@ class SnakeGame {
   int _foods = 0;
 
   Cell? food;
+
+  /// Top-left cell of the 2×2 bomb, or null.
   Cell? bonus;
   int bonusLeft = 0;
   int score = 0;
@@ -72,6 +79,22 @@ class SnakeGame {
   List<Cell> get body => _body.toList(growable: false);
   Heading get heading => _heading;
   int get stepTicks => stepTicksFor(level);
+  int get ticks => _ticks;
+
+  /// The 4 cells the bomb covers.
+  List<Cell> get bonusCells {
+    final b = bonus;
+    if (b == null) return const [];
+    return [
+      for (var dy = 0; dy < SnakeRules.bonusSize; dy++)
+        for (var dx = 0; dx < SnakeRules.bonusSize; dx++)
+          Cell(b.x + dx, b.y + dy),
+    ];
+  }
+
+  /// What the bomb is worth now: `level × (2 + whole seconds left)`, so
+  /// 10 × level right away and 2 × level at the end.
+  int get bonusValue => level * (2 + bonusLeft ~/ 60);
 
   /// Event names since the last call: `eat`, `bonus`, `crash`.
   List<String> takeEvents() {
@@ -132,19 +155,35 @@ class SnakeGame {
       _events.add('eat');
       food = _randomFreeCell();
       if (_foods % SnakeRules.bonusEvery == 0) {
-        bonus = _randomFreeCell();
+        bonus = _randomFreeBlock();
         bonusLeft = SnakeRules.bonusTicks;
       }
     }
-    if (bonus != null && next == bonus) {
-      score += 5 * level;
+    if (bonusCells.contains(next)) {
+      score += bonusValue;
       bonus = null;
       _events.add('bonus');
     }
   }
 
+  /// A random 2×2 block of free cells inside the field (no wrap), or null.
+  Cell? _randomFreeBlock() {
+    final taken = <Cell>{..._body, ?food};
+    const n = SnakeRules.bonusSize;
+    final options = <Cell>[
+      for (var y = 0; y <= SnakeRules.rows - n; y++)
+        for (var x = 0; x <= SnakeRules.cols - n; x++)
+          if ([
+            for (var dy = 0; dy < n; dy++)
+              for (var dx = 0; dx < n; dx++) Cell(x + dx, y + dy),
+          ].every((c) => !taken.contains(c)))
+            Cell(x, y),
+    ];
+    return options.isEmpty ? null : options[_rng.nextInt(options.length)];
+  }
+
   Cell? _randomFreeCell() {
-    final taken = <Cell>{..._body, ?food, ?bonus};
+    final taken = <Cell>{..._body, ?food, ...bonusCells};
     final free = SnakeRules.cols * SnakeRules.rows - taken.length;
     if (free <= 0) return null;
     var k = _rng.nextInt(free);

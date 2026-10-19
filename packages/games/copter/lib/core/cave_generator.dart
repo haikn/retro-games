@@ -47,14 +47,25 @@ class CaveGenerator {
   double _ramp(double worldX) =>
       (worldX / config.rampDistancePx).clamp(0.0, 1.0).toDouble();
 
+  /// 0 until the first ramp ends, then up to 1 at [Config.lateRampDistancePx].
+  double _lateRamp(double worldX) =>
+      ((worldX - config.rampDistancePx) /
+              (config.lateRampDistancePx - config.rampDistancePx))
+          .clamp(0.0, 1.0)
+          .toDouble();
+
   double gapAt(double worldX) => _snap(
-    config.initialGap + (config.minGap - config.initialGap) * _ramp(worldX),
+    config.initialGap +
+        (config.minGap - config.initialGap) * _ramp(worldX) +
+        (config.lateMinGap - config.minGap) * _lateRamp(worldX),
   );
 
   double obstacleSpacingAt(double worldX) =>
       config.initialObstacleSpacing +
       (config.minObstacleSpacing - config.initialObstacleSpacing) *
-          _ramp(worldX);
+          _ramp(worldX) +
+      (config.lateMinObstacleSpacing - config.minObstacleSpacing) *
+          _lateRamp(worldX);
 
   /// Appends the next column to [ring].
   void next(ColumnRing ring) {
@@ -121,10 +132,14 @@ class CaveGenerator {
   bool _tryObstacle(ColumnRing ring, double top, double bottom) {
     final lcd = config.lcdPixel;
     final minPass = config.minPassableHeight;
+    // Blocks leave at least minPass free: at most gap − minPass tall.
+    final maxHeight = (bottom - top - minPass).clamp(
+      config.obstacleMinHeight,
+      config.obstacleMaxHeight,
+    );
     final heights =
-        ((config.obstacleMaxHeight - config.obstacleMinHeight) /
-                config.obstacleHeightStep)
-            .round() +
+        ((maxHeight - config.obstacleMinHeight) / config.obstacleHeightStep)
+            .floor() +
         1;
     for (var r = 0; r < config.placementRetries; r++) {
       final h =

@@ -9,7 +9,11 @@ abstract final class BlockRules {
 
   /// Spawn rows above the visible well.
   static const hidden = 2;
-  static const lockDelayTicks = 15;
+
+  /// Time to slide a landed piece (F3); each successful move or rotation
+  /// on the floor restarts it, at most [maxLockResets] times per piece.
+  static const lockDelayTicks = 30;
+  static const maxLockResets = 15;
   static const clearTicks = 24;
   static const linesPerLevel = 10;
 
@@ -105,6 +109,7 @@ class BlocksGame {
   int _clearLeft = 0;
   int _gravityCount = 0;
   int _lockCount = 0;
+  int _lockResets = 0;
 
   /// Event names since the last call: `rotate`, `lock`, `clear`, `four`,
   /// `crash`.
@@ -153,6 +158,7 @@ class BlocksGame {
     piece = Piece(kind, 0, (BlockRules.cols - size) ~/ 2, -1);
     _gravityCount = 0;
     _lockCount = 0;
+    _lockResets = 0;
     if (!_fits(piece)) _end();
   }
 
@@ -167,12 +173,21 @@ class BlocksGame {
     return true;
   }
 
+  /// A player move or rotation succeeded: on the floor, restart the lock
+  /// delay (up to [BlockRules.maxLockResets] times per piece).
+  void _moved() {
+    if (!_fits(piece.moved(0, 1)) && _lockResets < BlockRules.maxLockResets) {
+      _lockResets++;
+      _lockCount = 0;
+    }
+  }
+
   void moveLeft() {
-    if (active) _try(piece.moved(-1, 0));
+    if (active && _try(piece.moved(-1, 0))) _moved();
   }
 
   void moveRight() {
-    if (active) _try(piece.moved(1, 0));
+    if (active && _try(piece.moved(1, 0))) _moved();
   }
 
   /// Clockwise, with wall kicks.
@@ -181,7 +196,7 @@ class BlocksGame {
     const kicks = [(0, 0), (-1, 0), (1, 0), (0, -1), (-2, 0), (2, 0)];
     for (final (dx, dy) in kicks) {
       if (_try(piece.moved(dx, dy, 1))) {
-        _lockCount = 0;
+        _moved();
         _events.add('rotate');
         return;
       }

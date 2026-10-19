@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'reachability_oracle.dart';
 
 void main() {
-  test('exhaustive search survives seed 1 past the end of the ramp', () {
-    // 4 000 ticks = distance 2 000, where the gap reaches its minimum.
-    expect(firstUnsurvivableTick(1, 4000), -1);
-  });
+  test('exhaustive search survives seed 1 through both ramps', () {
+    // 8 000 ticks = distance 4 000, where the second ramp (C7) ends.
+    expect(firstUnsurvivableTick(1, 8000), -1);
+  }, timeout: const Timeout(Duration(minutes: 3)));
 
   test(
     'exhaustive search survives 20 seeds to distance 5 000',

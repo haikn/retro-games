@@ -56,6 +56,7 @@ class HopModule extends GameModule {
           'the train bell.',
       'Keep moving: the screen edge creeps up behind you.',
       'Your score is the furthest lane you reach.',
+      'Tap the score bar to pause.',
     ],
     startHint: const ['Tap to', 'start'],
   );

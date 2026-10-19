@@ -54,7 +54,7 @@ class _LauncherScreenState extends State<LauncherScreen> {
       return;
     }
     _noticeTimer?.cancel();
-    setState(() => _notice = 'Coming soon');
+    setState(() => _notice = LcdStrings.of(context).comingSoon);
     _noticeTimer = Timer(
       const Duration(seconds: 2),
       () => mounted ? setState(() => _notice = null) : null,
@@ -75,7 +75,7 @@ class _LauncherScreenState extends State<LauncherScreen> {
               Positioned.fill(child: LcdBackground(palette: p)),
               LcdHeader(
                 palette: p,
-                title: 'Games',
+                title: LcdStrings.of(context).games,
                 trailing: '${_selected + 1}/${entries.length}',
               ),
               for (var i = 0; i < entries.length && i < 4; i++)
@@ -95,11 +95,12 @@ class _LauncherScreenState extends State<LauncherScreen> {
               if (_notice != null)
                 LcdDialog(
                   palette: p,
-                  rect: const Rect.fromLTWH(50, 335, 300, 75),
+                  // 'Coming soon' is 320 px: the box needs 340 inside.
+                  rect: const Rect.fromLTWH(25, 335, 350, 75),
                   lines: [Text(_notice!, style: LcdText.body(p.ink))],
                 ),
               SoftKey(
-                label: 'Select',
+                label: LcdStrings.of(context).select,
                 palette: p,
                 onTap: () => _activate(_selected),
               ),

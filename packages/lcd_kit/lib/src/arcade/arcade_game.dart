@@ -58,6 +58,7 @@ class ArcadeSpec {
     required this.startHint,
     this.levels,
     this.defaultLevel = 1,
+    this.pauseKey,
   });
 
   /// Menu header.
@@ -78,4 +79,8 @@ class ArcadeSpec {
   /// Number of selectable levels (menu `Level: N`), or null for none.
   final int? levels;
   final int defaultLevel;
+
+  /// Where to draw an on-screen pause key (virtual px), if the game has
+  /// room for one. Tapping the HUD strip pauses every game regardless.
+  final Rect? pauseKey;
 }

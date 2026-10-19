@@ -10,6 +10,31 @@ const sampleRate = 22050;
 double square(double hz, int i) =>
     ((i * hz * 2 / sampleRate).floor()).isEven ? 1.0 : -1.0;
 
+/// [samples] through a one-pole low-pass with time constant [ms]; rounds
+/// square-wave edges into a softer buzz. Pre-rolled over one cycle of a
+/// periodic signal so a loop stays seamless.
+List<double> lowPass(List<double> samples, double ms, {bool periodic = false}) {
+  final a = 1 - _exp(-1 / (ms / 1000 * sampleRate));
+  var y = 0.0;
+  if (periodic) {
+    for (final x in samples) {
+      y += a * (x - y);
+    }
+  }
+  return [for (final x in samples) y += a * (x - y)];
+}
+
+double _exp(double x) {
+  // e^x for small negative x, without dart:math (keeps this file pure).
+  var sum = 1.0;
+  var term = 1.0;
+  for (var n = 1; n < 20; n++) {
+    term *= x / n;
+    sum += term;
+  }
+  return sum;
+}
+
 /// One beep of [seconds], with 2 ms fades so it starts and ends at 0.
 List<double> beep(double hz, double seconds, double volume) {
   final n = (seconds * sampleRate).round();

@@ -37,4 +37,12 @@ void main() {
     const steep = Config(walkStep: 10);
     expect(steep.invariantViolations(), contains(contains('walkStep')));
   });
+
+  test('second ramp must keep a passable window', () {
+    const tooNarrow = Config(lateMinGap: 125);
+    expect(
+      tooNarrow.invariantViolations(),
+      contains(contains('lateMinGap - obstacleMinHeight')),
+    );
+  });
 }

@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import 'lcd_kit.dart';
@@ -94,4 +95,18 @@ Future<void> loadLcdFont() async {
     if (parent.path == dir.path) throw StateError('Silkscreen font not found');
     dir = parent;
   }
+}
+
+/// Width in virtual px of [text] in the LCD body style (bold for headers).
+/// Load the real font first ([loadLcdFont]) for meaningful numbers.
+double lcdTextWidth(String text, {bool bold = false}) {
+  final style = LcdText.body(const Color(0xFF000000));
+  final painter = TextPainter(
+    text: TextSpan(
+      text: text,
+      style: bold ? style.copyWith(fontWeight: FontWeight.w700) : style,
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  return painter.width;
 }

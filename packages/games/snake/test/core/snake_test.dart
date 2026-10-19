@@ -40,7 +40,7 @@ void main() {
     expect(g.body.first, const Cell(0, 18));
     g.turn(Heading.up);
     steps(g, 19);
-    expect(g.body.first, const Cell(0, 36)); // 18 - 19 wraps to 36
+    expect(g.body.first, const Cell(0, 35)); // 18 - 19 wraps to 35 (36 rows)
   });
 
   test('reversing and repeating the heading are ignored', () {
@@ -88,7 +88,7 @@ void main() {
     }
   });
 
-  test('every 5th food brings a bonus for 5 s worth 5 × level', () {
+  test('every 5th food brings a 2×2 bomb on free cells', () {
     final g = game(level: 2);
     for (var i = 0; i < 5; i++) {
       final ahead = Cell((g.body.first.x + 1) % 19, g.body.first.y);
@@ -96,24 +96,46 @@ void main() {
       steps(g, 1);
     }
     expect(g.bonus, isNotNull);
-    expect(g.body.contains(g.bonus), isFalse);
-    final score = g.score;
-    g.debugPlaceBonus(Cell((g.body.first.x + 1) % 19, g.body.first.y));
+    expect(g.bonusCells, hasLength(4));
+    for (final c in g.bonusCells) {
+      expect(g.body.contains(c), isFalse);
+      expect(c, isNot(g.food));
+      expect(c.x, lessThan(SnakeRules.cols));
+      expect(c.y, lessThan(SnakeRules.rows));
+    }
+  });
+
+  test('the bomb is eaten by touching any of its cells; worth more early', () {
+    final g = game(level: 2);
+    // Bomb whose lower-left cell is right ahead of the head (7, 18).
+    g.debugPlaceBonus(const Cell(8, 17));
+    expect(g.bonusValue, 20); // 10 × level when fresh
+    final before = g.score;
     steps(g, 1);
-    expect(g.score, score + 10);
     expect(g.bonus, isNull);
+    expect(g.score - before, inInclusiveRange(4, 20));
     expect(g.takeEvents(), contains('bonus'));
   });
 
-  test('an uneaten bonus disappears after 300 ticks', () {
-    final g = game();
+  test('bomb value drops to 2 × level at the end', () {
+    final g = game(level: 3);
     g.debugPlaceBonus(const Cell(0, 0));
-    for (var i = 0; i < 299; i++) {
+    for (var i = 0; i < 479; i++) {
       g.tick();
     }
-    expect(g.bonus, isNotNull);
-    g.tick();
-    expect(g.bonus, isNull);
+    expect(g.bonusValue, 6);
+  });
+
+  test('food never lands on the bomb', () {
+    final g = game();
+    g.debugPlaceBonus(const Cell(0, 0));
+    for (var i = 0; i < 50; i++) {
+      final ahead = Cell((g.body.first.x + 1) % 19, g.body.first.y);
+      g.debugPlaceFood(ahead);
+      steps(g, 1);
+      expect(g.bonusCells.contains(g.food), isFalse);
+      if (g.bonus == null) g.debugPlaceBonus(const Cell(0, 0));
+    }
   });
 
   test('biting itself ends the game', () {

@@ -2,7 +2,7 @@
 
 Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-lcd-arcade-design.md) · Design: [LCD Arcade canvas](https://claude.ai/artifact/VyDKYb9SSQEexE7AsHFWok)
 
-## Status (2026-10-18)
+## Status (2026-10-19)
 
 | Milestone | State |
 |---|---|
@@ -12,7 +12,7 @@ Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-
 | A3 Hop | Done |
 | A4 Blocks | Done, held back from release builds until C4 |
 | A5 Polish & QA | Code done (shared sign-in, collection icon, smoke test, Hop drawing cost); **device QA, performance and playtest tuning need real phones** |
-| A5.1 Playtest feedback round 1 | ⬜ planned (below) |
+| A5.1 Playtest feedback round 1 | Done in code; the rotor sound and the new drawings need the owner's OK on a phone |
 | A6 Release | Not started (store accounts and records) |
 
 Status: ✅ done · 🟡 code done, still needs a device, store setup or a decision · ⬜ not started. Per-task status is marked in the tables below.
@@ -110,15 +110,15 @@ From the product owner's first play session (2026-10-18). Design details: spec s
 
 | # | Task | Acceptance |
 |---|---|---|
-| ⬜ F1 | Copter: softer rotor sound (rounded square, lower pitch, per-pulse fades, lower volume) | Loop stays seamless (test); owner approves on device |
-| ⬜ F2 | Menus and How to play: show the scrollbar only when the content is taller than its area | Widget tests: short menu without scrollbar, long text with one |
-| ⬜ F3 | Blocks: longer lock delay that resets on each successful move or rotate (capped) so pieces can still slide at the bottom | Core tests for slide, reset and cap |
-| ⬜ F4 | Pause / continue / quit reachable on screen in every grid game (Blocks: pause key in the side panel; Snake, Hop: tap the HUD strip) | Widget tests; works without a back button (iPhone) |
-| ⬜ F5 | Blocks: bricks drawn like a handheld console (1-px border with a centre dot) | Rendered image approved |
-| ⬜ F6 | Snake: head bigger than the body (full 4×4 cell, eye, notch toward the heading) | Rendered image approved |
-| ⬜ F7 | Snake: bonus becomes an animated bomb (2×2 cells, flickering fuse), lasts 8 s, blinks in the last 2 s, value drops with time | Core tests for size, timing and value; rendered frames approved |
-| ⬜ F8 | Snake: bottom margin equal to the side margins (field 19×36, border LCD y 13–158) | Rendered image; core tests updated for 36 rows |
-| ⬜ F9 | Decide C6 (languages) and C7 (Copter speed ramp); implement if accepted | Spec updated |
+| 🟡 F1 | Copter: softer rotor sound (rounded square, lower pitch, per-pulse fades, lower volume) | Loop stays seamless (test); owner approves on device. Default is variant b; variants a, b and c are in `packages/games/copter/tool/rotor_variants/` to compare by ear |
+| ✅ F2 | Menus and How to play: show the scrollbar only when the content is taller than its area | Widget tests: short menu without scrollbar, long text with one |
+| ✅ F3 | Blocks: longer lock delay that resets on each successful move or rotate (capped) so pieces can still slide at the bottom | Core tests for slide, reset and cap |
+| ✅ F4 | Pause / continue / quit reachable on screen in every grid game (Blocks: pause key in the side panel; Snake, Hop: tap the HUD strip) | Widget tests; works without a back button (iPhone) |
+| ✅ F5 | Blocks: bricks drawn like a handheld console (1-px border with a centre dot) | Rendered image approved |
+| ✅ F6 | Snake: head bigger than the body (full 4×4 cell, eye, notch toward the heading) | Rendered image approved |
+| ✅ F7 | Snake: bonus becomes an animated bomb (2×2 cells, flickering fuse), lasts 8 s, blinks in the last 2 s, value drops with time | Core tests for size, timing and value; rendered frames approved |
+| ✅ F8 | Snake: bottom margin equal to the side margins (field 19×36, border LCD y 13–158) | Rendered image; core tests updated for 36 rows |
+| ✅ F9 | Decide C6 (languages) and C7 (Copter speed ramp); implement if accepted | Spec updated. C6: shared text in `LcdStrings`, width tests in kit and app. C7: second density ramp to distance 4 000 |
 
 ## A6 — Release
 
