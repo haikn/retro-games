@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lcd_kit/lcd_kit.dart';
 
+import '../update/update_check.dart';
+
 /// A tile on the launcher: a playable [module], or a game still to come.
 class LauncherEntry {
   const LauncherEntry({required this.title, required this.icon, this.module});
@@ -25,11 +27,28 @@ class LauncherScreen extends StatefulWidget {
     required this.entries,
     required this.palette,
     required this.onOpen,
+    this.banner,
+    this.update = UpdateNeed.none,
+    this.onUpdate,
+    this.onLater,
+    this.onAdPrivacy,
   });
 
   final List<LauncherEntry> entries;
   final LcdPalette palette;
   final void Function(GameModule module) onOpen;
+
+  /// Ad banner under the LCD (sizes itself; empty while no ad shows).
+  final Widget? banner;
+
+  /// An update prompt replaces the tiles: `Update` (+ `Later` when
+  /// optional). A required update keeps the games locked.
+  final UpdateNeed update;
+  final VoidCallback? onUpdate;
+  final VoidCallback? onLater;
+
+  /// Shows the `Ads` soft key (ad privacy options), where the law needs it.
+  final VoidCallback? onAdPrivacy;
 
   @override
   State<LauncherScreen> createState() => _LauncherScreenState();
@@ -64,52 +83,113 @@ class _LauncherScreenState extends State<LauncherScreen> {
   @override
   Widget build(BuildContext context) {
     final p = widget.palette;
-    final entries = widget.entries;
+    final banner = widget.banner;
     return Material(
       color: p.bezel,
       child: SafeArea(
-        child: LcdViewport(
-          size: lcdPortrait,
-          child: Stack(
-            children: [
-              Positioned.fill(child: LcdBackground(palette: p)),
-              LcdHeader(
-                palette: p,
-                title: LcdStrings.of(context).games,
-                trailing: '${_selected + 1}/${entries.length}',
+        child: Column(
+          children: [
+            Expanded(
+              child: LcdViewport(
+                size: lcdPortrait,
+                child: widget.update == UpdateNeed.none
+                    ? _tiles(p)
+                    : _updatePrompt(p),
               ),
-              for (var i = 0; i < entries.length && i < 4; i++)
-                Positioned(
-                  left: i.isEven ? 5 : 205,
-                  top: i < 2 ? 60 : 405,
-                  width: 190,
-                  height: 325,
-                  child: _Tile(
-                    entry: entries[i],
-                    palette: p,
-                    selected: i == _selected,
-                    onTapDown: () => setState(() => _selected = i),
-                    onTap: () => _activate(i),
-                  ),
-                ),
-              if (_notice != null)
-                LcdDialog(
-                  palette: p,
-                  // 'Coming soon' is 320 px: the box needs 340 inside.
-                  rect: const Rect.fromLTWH(25, 335, 350, 75),
-                  lines: [Text(_notice!, style: LcdText.body(p.ink))],
-                ),
-              SoftKey(
-                label: LcdStrings.of(context).select,
-                palette: p,
-                onTap: () => _activate(_selected),
-              ),
-            ],
-          ),
+            ),
+            ?banner,
+          ],
         ),
       ),
     );
   }
+
+  Widget _updatePrompt(LcdPalette p) {
+    final t = LcdStrings.of(context);
+    final required = widget.update == UpdateNeed.required;
+    return LcdMenuScreen(
+      key: ValueKey(widget.update),
+      palette: p,
+      title: required ? t.updateNeeded : t.newVersion,
+      boldTitle: true,
+      trailing: '',
+      selectLabel: t.select,
+      items: [
+        LcdMenuItem(t.update, () => widget.onUpdate?.call()),
+        if (!required) LcdMenuItem(t.later, () => widget.onLater?.call()),
+      ],
+    );
+  }
+
+  Widget _tiles(LcdPalette p) {
+    final entries = widget.entries;
+    final t = LcdStrings.of(context);
+    final onAdPrivacy = widget.onAdPrivacy;
+    return Stack(
+      children: [
+        Positioned.fill(child: LcdBackground(palette: p)),
+        LcdHeader(
+          palette: p,
+          title: t.games,
+          trailing: '${_selected + 1}/${entries.length}',
+        ),
+        for (var i = 0; i < entries.length && i < 4; i++)
+          Positioned(
+            // 10-px gaps between tiles both ways (tiles at y 60–395 and
+            // 405–740, above the soft key at 745).
+            left: i.isEven ? 5 : 205,
+            top: i < 2 ? 60 : 405,
+            width: 190,
+            height: 335,
+            child: _Tile(
+              entry: entries[i],
+              palette: p,
+              selected: i == _selected,
+              onTapDown: () => setState(() => _selected = i),
+              onTap: () => _activate(i),
+            ),
+          ),
+        if (_notice != null)
+          LcdDialog(
+            palette: p,
+            // 'Coming soon' is 320 px: the box needs 340 inside.
+            rect: const Rect.fromLTWH(25, 335, 350, 75),
+            lines: [Text(_notice!, style: LcdText.body(p.ink))],
+          ),
+        if (onAdPrivacy == null)
+          SoftKey(
+            label: t.select,
+            palette: p,
+            onTap: () => _activate(_selected),
+          )
+        else ...[
+          // Two soft keys, as on the phones: `Ads` left, `Select`
+          // right.
+          _key(const Rect.fromLTWH(0, 745, 150, 55), t.ads, p, onAdPrivacy),
+          _key(
+            const Rect.fromLTWH(150, 745, 250, 55),
+            t.select,
+            p,
+            () => _activate(_selected),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static Widget _key(Rect r, String label, LcdPalette p, VoidCallback onTap) =>
+      Positioned.fromRect(
+        rect: r,
+        child: Semantics(
+          button: true,
+          label: label,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: Center(child: Text(label, style: LcdText.body(p.ink))),
+          ),
+        ),
+      );
 }
 
 class _Tile extends StatelessWidget {

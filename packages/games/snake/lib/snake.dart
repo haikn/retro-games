@@ -1,4 +1,4 @@
-/// Snake: the classic phone game, as an LCD Arcade module.
+/// Snake: the classic phone game, as a Retro LCD Games module.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -47,7 +47,7 @@ class SnakeModule extends GameModule {
     create: SnakeArcade.new,
     sounds: const ['eat.wav', 'bonus.wav', 'crash.wav'],
     instructions: const [
-      'Swipe up, down, left or right to steer.',
+      'Swipe up, down, left or right to steer. You can keep your finger down and slide it to turn again.',
       'Eat food to grow and score. Every fifth food brings a bomb for eight '
           'seconds: the sooner you eat it, the more it is worth.',
       'The walls wrap around. Do not bite your own tail.',
@@ -57,6 +57,10 @@ class SnakeModule extends GameModule {
     startHint: const ['Swipe to', 'start'],
     levels: 9,
     defaultLevel: 5,
+    // Turn as soon as the finger moves ~4 mm, and keep turning within one
+    // stroke without lifting the finger.
+    swipeThreshold: 18,
+    continuousSwipes: true,
   );
 
   @override

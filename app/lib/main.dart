@@ -6,11 +6,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hop/hop.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lcd_kit/lcd_kit.dart';
 import 'package:snake/snake.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'ads/ads.dart';
 import 'launcher/launcher_screen.dart';
 import 'launcher/orientation.dart';
+import 'remote/firebase_settings.dart';
+import 'remote/remote_settings.dart';
+import 'update/update_check.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +36,29 @@ Future<void> main() async {
   final store = await LocalStore.open();
   await store.migrateLegacyScores('copter'); // Cave Copter 1.x scores
   final services = ArcadeServices.create(store, games);
-  runApp(LcdArcadeApp(services: services));
+  final info = await PackageInfo.fromPlatform();
+  final remote = RemoteSettingsController(
+    adsPreview
+        ? const FixedRemoteSettings(
+            RemoteSettings(
+              adsEnabled: true,
+              bannerAndroid: testBannerAndroid,
+              bannerIos: testBannerIos,
+            ),
+          )
+        : FirebaseSettingsSource(),
+  );
+  unawaited(remote.start());
+  runApp(
+    LcdArcadeApp(
+      services: services,
+      remote: remote,
+      version: info.version,
+      ads: AdsController(),
+      testAds: !kReleaseMode || playtest,
+      openStore: (settings) => openStore(settings, info.packageName),
+    ),
+  );
   // Sign in once, while the launcher shows (never mid-run).
   unawaited(services.signIn());
 }
@@ -43,11 +71,19 @@ const games = <GameModule>[
   HopModule(),
 ];
 
+/// `--dart-define=PLAYTEST=true`: a release build for our own phones that
+/// still opens games not yet cleared for release.
+const playtest = bool.fromEnvironment('PLAYTEST');
+
+/// `--dart-define=ADS_PREVIEW=true`: show Google's test banner without
+/// Firebase, to check the ad layout and consent flow on a phone.
+const adsPreview = bool.fromEnvironment('ADS_PREVIEW');
+
 /// Launcher tiles. A game not cleared for release (e.g. Blocks, pending its
 /// IP review) is shown as "Coming soon" in release builds.
 List<LauncherEntry> launcherEntriesFor(
   List<GameModule> games, {
-  bool release = kReleaseMode,
+  bool release = kReleaseMode && !playtest,
 }) => [
   for (final g in games)
     if (g.releaseCleared || !release)
@@ -104,28 +140,62 @@ class ArcadeServices {
   );
 }
 
+/// Opens this app's store page (for an update).
+Future<void> openStore(RemoteSettings settings, String packageName) async {
+  final uri = switch (defaultTargetPlatform) {
+    TargetPlatform.iOS when settings.iosAppId.isNotEmpty => Uri.parse(
+      'https://apps.apple.com/app/id${settings.iosAppId}',
+    ),
+    TargetPlatform.iOS => null,
+    _ => Uri.parse(
+      'https://play.google.com/store/apps/details?id=$packageName',
+    ),
+  };
+  if (uri == null) return;
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    debugPrint('Store link failed: $e');
+  }
+}
+
 class LcdArcadeApp extends StatelessWidget {
   const LcdArcadeApp({
     super.key,
     required this.services,
     this.palette = LcdPalette.active,
+    this.remote,
+    this.version = '',
+    this.ads,
+    this.testAds = true,
+    this.openStore,
   });
 
   final ArcadeServices services;
   final LcdPalette palette;
 
+  /// Remote ads and update settings (none in tests: the defaults).
+  final ValueListenable<RemoteSettings>? remote;
+
+  /// This app's version, e.g. `1.0.0`, for the update check.
+  final String version;
+
+  /// Ads, or null for none.
+  final AdsController? ads;
+
+  /// Use Google's test ad units (debug and playtest builds).
+  final bool testAds;
+  final Future<void> Function(RemoteSettings settings)? openStore;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LCD Arcade',
+      title: 'Retro LCD Games',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(scaffoldBackgroundColor: palette.bezel),
       home: Builder(
-        builder: (context) => LauncherScreen(
-          entries: launcherEntriesFor(games),
-          palette: palette,
-          onOpen: (module) => openGame(context, module),
-        ),
+        builder: (context) =>
+            _Home(app: this, onOpen: (module) => openGame(context, module)),
       ),
     );
   }
@@ -150,5 +220,68 @@ class LcdArcadeApp extends StatelessWidget {
       ),
     );
     await lockOrientation(GameOrientation.portrait);
+  }
+}
+
+/// The launcher with the remote parts: update prompt, banner, `Ads` key.
+class _Home extends StatefulWidget {
+  const _Home({required this.app, required this.onOpen});
+
+  final LcdArcadeApp app;
+  final void Function(GameModule module) onOpen;
+
+  @override
+  State<_Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<_Home> {
+  static const _dismissedKey = 'update.dismissed';
+  static const _none = AlwaysStoppedAnimation(RemoteSettings.defaults);
+
+  bool _privacyKey = false;
+
+  LocalStore get _store => widget.app.services.store.scoped('app');
+
+  ValueListenable<RemoteSettings> get _remote => widget.app.remote ?? _none;
+
+  @override
+  Widget build(BuildContext context) {
+    final app = widget.app;
+    final ads = app.ads;
+    return ValueListenableBuilder<RemoteSettings>(
+      valueListenable: _remote,
+      builder: (context, settings, _) {
+        final need = updateNeed(
+          app.version,
+          settings,
+          dismissed: _store.intSetting(_dismissedKey, 0),
+        );
+        return LauncherScreen(
+          entries: launcherEntriesFor(games),
+          palette: app.palette,
+          onOpen: widget.onOpen,
+          update: need,
+          onUpdate: () => app.openStore?.call(settings),
+          onLater: () async {
+            final latest = versionCode(settings.latestVersion);
+            if (latest == null) return;
+            await _store.setIntSetting(_dismissedKey, latest);
+            if (mounted) setState(() {});
+          },
+          onAdPrivacy: ads != null && _privacyKey
+              ? () => unawaited(ads.showPrivacyOptions())
+              : null,
+          banner: ads == null
+              ? null
+              : BannerSlot(
+                  settings: _remote,
+                  ads: ads,
+                  testAds: app.testAds,
+                  onPrivacyRequired: () =>
+                      mounted ? setState(() => _privacyKey = true) : null,
+                ),
+        );
+      },
+    );
   }
 }

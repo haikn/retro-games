@@ -34,6 +34,11 @@ class LcdStrings {
     this.tryAgainLater = 'Try later', // 'Try again later' is 405 px
     this.notAvailable = 'Not available',
     this.pause = 'Pause',
+    this.newVersion = 'New version',
+    this.updateNeeded = 'Must update',
+    this.update = 'Update',
+    this.later = 'Later',
+    this.ads = 'Ads',
   });
 
   static const en = LcdStrings();
@@ -66,6 +71,15 @@ class LcdStrings {
   final String tryAgainLater;
   final String notAvailable;
   final String pause;
+
+  /// Launcher update prompt (optional / required) and its items.
+  final String newVersion;
+  final String updateNeeded;
+  final String update;
+  final String later;
+
+  /// Launcher soft key that opens the ad privacy options.
+  final String ads;
 
   /// [template] with its `%s` replaced by [value].
   static String fill(String template, Object value) =>

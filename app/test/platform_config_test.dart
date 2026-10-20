@@ -6,6 +6,26 @@ import 'package:lcd_arcade/main.dart';
 /// Guards platform settings that code generators (icons, splash) have
 /// silently reverted before, and the orientation setup of the collection.
 void main() {
+  test('app name and id (decision C2) match on both platforms', () {
+    const id = 'com.nhk.retrolcdgames';
+    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+    expect(gradle, contains('applicationId = "$id"'));
+    expect(gradle, contains('namespace = "$id"'));
+    expect(
+      File('android/app/src/main/kotlin/com/nhk/retrolcdgames/MainActivity.kt')
+          .readAsStringSync(),
+      contains('package $id'),
+    );
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+    expect(manifest, contains('android:label="Retro LCD Games"'));
+    final pbx = File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
+    expect(pbx, contains('PRODUCT_BUNDLE_IDENTIFIER = $id;'));
+    expect(pbx, isNot(contains('caveCopter')));
+    final plist = File('ios/Runner/Info.plist').readAsStringSync();
+    expect(plist, contains('<string>Retro LCD Games</string>'));
+  });
+
   test('Android leaves orientation to the app (portrait launcher, each game '
       'picks its own)', () {
     final manifest = File('android/app/src/main/AndroidManifest.xml')
@@ -50,6 +70,16 @@ void main() {
       manifest.contains('com.google.android.gms.games.APP_ID'),
       games.any((g) => g.leaderboard.androidConfigured),
     );
+  });
+
+  test('AdMob app id present on both platforms (the Android app crashes at '
+      'launch without it)', () {
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+    expect(manifest, contains('com.google.android.gms.ads.APPLICATION_ID'));
+    expect(manifest, contains('ca-app-pub-'));
+    final plist = File('ios/Runner/Info.plist').readAsStringSync();
+    expect(plist, contains('<key>GADApplicationIdentifier</key>'));
   });
 
   test('Xcode asset symbol setting intact (flutter_launcher_icons rewrites '

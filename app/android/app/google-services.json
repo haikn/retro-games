@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "944506962960",
+    "project_id": "lcd-arcade-shell",
+    "storage_bucket": "lcd-arcade-shell.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944506962960:android:fd4d5296a48dee3f97b695",
+        "android_client_info": {
+          "package_name": "com.nhk.cave_copter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbWu1_4qkZBRUcN7L8J8IPKsXi6X8ZouI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944506962960:android:f581b70470c8625f97b695",
+        "android_client_info": {
+          "package_name": "com.nhk.retrolcdgames"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbWu1_4qkZBRUcN7L8J8IPKsXi6X8ZouI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

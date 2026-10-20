@@ -19,20 +19,23 @@ Success criteria: as Cave Copter (60 fps on the low-end reference device, identi
 
 - iOS and Android, one Flutter app.
 - Launcher, four games, a menu per game, local best score per game, one platform leaderboard per game, sound effects, one app-wide sound setting.
-- English only. Out of scope: ads, in-app purchases, accounts, cloud save, achievements, multiplayer, settings beyond sound and start level.
+- English only. Out of scope: in-app purchases, accounts, cloud save, achievements, multiplayer, settings beyond sound and start level.
+- Added after playtest round 2 (C8, C9): an optional home-screen ad banner and update prompts, both switched remotely.
 
 ## Open Decisions (resolve before A1 ends)
 
 | # | Decision | Recommendation | Why it matters |
 |---|---|---|---|
 | C1 | One app or four apps | **One app** with a launcher (as requested) | Shared code, one store listing, one review. Cave Copter is not yet in a store, so its store record can become the collection's. |
-| C2 | Collection name and app id | A distinct name (working: "LCD Arcade"); decide before any store record, then keep it | Replaces D1 of the Copter spec; the app id cannot change once store records exist. |
+| C2 | Collection name and app id | **Decided (owner, 2026-10-19):** "Retro LCD Games", app id `com.nhk.retrolcdgames` on Android and iOS. Internal names (Dart package `lcd_arcade`, leaderboard IDs) stay as they are; players never see them | Replaces D1 of the Copter spec; the app id cannot change once store records exist. |
 | C3 | Game names | Generic, non-trademarked names (working: Copter, Snake, Blocks, Hop). Never "Tetris", "Crossy Road", "Nokia" or "Snake II" in the app or listing | "Tetris" and "Crossy Road" are registered trademarks; "Snake" alone is a generic genre name. |
 | C4 | **Falling-block game: legal review** (Blocks is built but `releaseCleared = false`: release builds show it as "Coming soon") | **Get a short review by an IP lawyer before building Blocks**; schedule Blocks last | The Tetris Company enforces its rights actively, and in *Tetris Holding v. Xio Interactive* (D.N.J. 2012) a clone was found to infringe on the *look* of Tetris (the 10×20 board, the seven four-cell pieces, how they look and move), not only its name. A monochrome LCD style differs from Tetris' coloured look, but that alone may not be enough. Fallback if advised: change the board and pieces (e.g. 3-cell or 5-cell pieces, a different well shape) or drop Blocks. |
 | C5 | Hop: avoid copying Crossy Road's distinctive elements | Generic crossing mechanics (lanes, cars, logs, trains) with our own art and no "eagle"-style chaser; time pressure comes from a slowly advancing screen edge instead | Mechanics are not protected; distinctive characters, names and presentation can be. |
 
 | C6 | Languages: follow the phone language? | **Decided, implemented (A5.1):** v1 in English, with all text in one place (`LcdStrings` in `lcd_kit`) and a test that measures every string against its slot with the real font; add German, French, Spanish and Portuguese once a width check passes; other languages (Vietnamese, Polish, Turkish, Cyrillic, Asian scripts) need a second pixel font | See *Questions answered* below: the Silkscreen font only covers Western European letters, and portrait rows fit about 10 letters. |
 | C7 | Copter: keep getting harder after the first minute? | **Decided, implemented (A5.1):** yes, by density (more and taller blocks, gap down to 160 px), not by speed | Speed is fixed at exactly 1 LCD pixel per frame, which is what makes the scroll smooth; faster scrolling would bring the judder back. See *Questions answered*. |
+| C8 | Ads | **Decided (owner, 2026-10-19), implemented (A5.2):** one AdMob banner under the launcher tiles, never inside a game. Switched on or off, with its unit IDs, through Firebase Remote Config (`ads_enabled`, default off). The ads SDK starts only when ads are on, after Google's consent form (UMP) where the law requires it, with an `Ads` soft key for privacy options. No App Tracking Transparency prompt (iPhone ads non-personalised). Debug and playtest builds always use Google's test units | Lowest impact on the LCD look; no ad interrupts a run. Setup: `docs/ads-and-updates-setup.md`. |
+| C9 | Update prompts | **Decided (owner, 2026-10-19), implemented (A5.2):** Remote Config `update_latest_version` shows a dismissible `New version` screen once per version; `update_min_version` shows `Must update` and locks the games | Lets a serious bug be forced out without waiting for players to update. |
 
 ## Platform and Orientation
 
@@ -139,5 +142,5 @@ See decision C6.
 ## Store & Compliance
 
 - One store listing for the collection; screenshots of all four games in both orientations.
-- Privacy unchanged (no data collected by the app). Age rating 4+ / Everyone.
+- Privacy: no data collected while ads are off. With ads on (C8), declare the AdMob SDK's data in Play Data safety and the App Privacy label, mark "contains ads", and keep the 13+ audience (Copter D3). See `docs/ads-and-updates-setup.md`.
 - Names and art per C3–C5; nothing resembling Nokia, Tetris or Crossy Road branding.

@@ -74,6 +74,7 @@ class InstructionsScreen extends StatefulWidget {
     'Steer through the cave. Do not touch the walls or the blocks.',
     'The further you fly, the narrower the cave gets.',
     'Beat your top score and post it to the online scores.',
+    'Tap the score bar to pause.',
   ];
 
   final AppFlow flow;

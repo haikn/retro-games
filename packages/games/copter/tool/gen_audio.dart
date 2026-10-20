@@ -18,6 +18,8 @@ void main() {
   for (final name in rotorVariants.keys) {
     final file = File('${variants.path}/$name.wav')
       ..writeAsBytesSync(encodeWav(rotorVariant(name)));
-    stdout.writeln('Wrote ${file.path}${name == defaultRotor ? ' (= rotor.wav)' : ''}');
+    stdout.writeln(
+      'Wrote ${file.path}${name == defaultRotor ? ' (= rotor.wav)' : ''}',
+    );
   }
 }

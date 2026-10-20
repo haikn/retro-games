@@ -2,7 +2,7 @@
 
 The app code is done for all four games: it signs in once at launch (on the launcher), submits only new bests per game, keeps a failed submission and retries it after the next successful sign-in, and shows a short message on a game's Top score screen when `Online scores` can't open. What remains is creating the leaderboards in the store consoles and pasting the Play Games IDs into the project.
 
-Use the final app id from decision C2 before you create store records; the app id cannot be changed afterwards. The working id is still Cave Copter's: `com.nhk.caveCopter` (iOS) / `com.nhk.cave_copter` (Android).
+The app is **Retro LCD Games** with the app id `com.nhk.retrolcdgames` on both platforms (decision C2). The app id cannot be changed once store records exist.
 
 | Game | Game Center leaderboard ID | Play Games ID set in |
 |---|---|---|

@@ -28,8 +28,8 @@ class MainMenuScreen extends StatelessWidget {
   }
 }
 
-/// Pause menu: Continue, New game, Sound, Main menu; header shows the
-/// paused run's distance.
+/// Pause menu: Continue, New game, Sound, Main menu, All games; header
+/// shows the paused run's distance.
 class PausedScreen extends StatelessWidget {
   const PausedScreen({super.key, required this.flow});
 
@@ -47,6 +47,7 @@ class PausedScreen extends StatelessWidget {
         LcdMenuItem('New game', flow.newGame),
         LcdMenuItem(_soundLabel(flow), flow.toggleSound),
         LcdMenuItem('Main menu', flow.openMenu),
+        if (flow.onExit != null) LcdMenuItem('All games', flow.exitToGames),
       ],
     );
   }

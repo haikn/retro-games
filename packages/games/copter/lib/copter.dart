@@ -1,4 +1,4 @@
-/// Copter: the one-touch helicopter cave game, as an LCD Arcade module.
+/// Copter: the one-touch helicopter cave game, as a Retro LCD Games module.
 library;
 
 import 'dart:async';
@@ -111,7 +111,7 @@ class _CopterViewState extends State<CopterView> {
   @override
   void dispose() {
     _services.detach();
-    unawaited(_audio.stopLoop());
+    unawaited(_audio.dispose());
     _flow.dispose();
     super.dispose();
   }

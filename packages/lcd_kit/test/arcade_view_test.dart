@@ -301,6 +301,28 @@ void main() {
     expect(find.text('Do the thing.'), findsOneWidget);
   });
 
+  testWidgets('leaving the game frees its sound players', (tester) async {
+    await pump(tester);
+    expect(player.disposed, isFalse);
+    await tester.pumpWidget(const SizedBox());
+    expect(player.disposed, isTrue);
+  });
+
+  testWidgets('All games in the pause menu quits to the launcher', (
+    tester,
+  ) async {
+    final s = await pump(tester);
+    s.newGame();
+    await tester.pump();
+    await tester.tapAt(const Offset(200, 600));
+    await tester.pump();
+    s.back(); // playing → paused
+    await tester.pump();
+    expect(find.text('Paused'), findsOneWidget);
+    await tester.tap(find.text('All games'));
+    expect(exits, 1);
+  });
+
   testWidgets('All games returns to the launcher', (tester) async {
     await pump(tester);
     await tester.tap(find.text('All games'));

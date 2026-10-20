@@ -33,6 +33,8 @@ void main() {
       t.allGames,
       t.continueRun,
       t.mainMenu,
+      t.update,
+      t.later,
     ]) {
       fits(s, menuRow);
     }
@@ -69,5 +71,11 @@ void main() {
     expect(games + 15, lessThanOrEqualTo(fullWidth), reason: 'launcher header');
     fits(t.topScoreTitle, fullWidth, bold: true);
     fits(t.howToPlay, fullWidth, bold: true);
+    // Launcher update prompt: bold title alone (no counter).
+    fits(t.newVersion, fullWidth, bold: true);
+    fits(t.updateNeeded, fullWidth, bold: true);
+    // Launcher with the ad privacy key: `Ads` left, `Select` right.
+    fits(t.ads, 140);
+    fits(t.select, 240);
   });
 }

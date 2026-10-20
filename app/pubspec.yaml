@@ -1,5 +1,5 @@
 name: lcd_arcade
-description: "LCD Arcade (working name): four retro LCD games in one app."
+description: "Retro LCD Games: four retro LCD games in one app."
 publish_to: none
 version: 1.0.0+1
 resolution: workspace
@@ -15,6 +15,11 @@ dependencies:
   snake:
   hop:
   blocks:
+  firebase_core: ^5.0.0
+  firebase_remote_config: ^7.0.0
+  google_mobile_ads: ^9.1.0
+  package_info_plus: ^10.2.2
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

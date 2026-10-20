@@ -56,6 +56,22 @@ void main() {
     },
   );
 
+  testWithGame<HelicopterGame>(
+    'a press on the score bar pauses a run instead of flying',
+    build,
+    (game) async {
+      game.pointerDown(200); // below the HUD: starts the run
+      game.pointerUp();
+      game.pointerDown(20); // in the HUD strip
+      expect(game.phase.value, GamePhase.paused);
+      expect(game.holding, isFalse);
+      game.pointerUp();
+      game.resume();
+      game.pointerDown(20); // not playing yet: the press starts again
+      expect(game.phase.value, GamePhase.playing);
+    },
+  );
+
   testWithGame<HelicopterGame>('releasing forever crashes', build, (
     game,
   ) async {

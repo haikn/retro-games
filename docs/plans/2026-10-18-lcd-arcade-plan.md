@@ -6,13 +6,14 @@ Date: 2026-10-18 · Spec: [2026-10-18-lcd-arcade-design.md](../specs/2026-10-18-
 
 | Milestone | State |
 |---|---|
-| A0 Decisions | **Open**: C2 (collection name, app id), C4 (Blocks IP review) |
+| A0 Decisions | C2 decided (Retro LCD Games, `com.nhk.retrolcdgames`); **open**: C4 (Blocks IP review) |
 | A1 Collection shell | Done (workspace, lcd_kit, launcher, orientation switching) |
 | A2 Snake | Done |
 | A3 Hop | Done |
 | A4 Blocks | Done, held back from release builds until C4 |
 | A5 Polish & QA | Code done (shared sign-in, collection icon, smoke test, Hop drawing cost); **device QA, performance and playtest tuning need real phones** |
 | A5.1 Playtest feedback round 1 | Done in code; the rotor sound and the new drawings need the owner's OK on a phone |
+| A5.2 Playtest round 2 | Code done; ads and update prompts wait for Firebase and AdMob accounts (`docs/ads-and-updates-setup.md`) |
 | A6 Release | Not started (store accounts and records) |
 
 Status: ✅ done · 🟡 code done, still needs a device, store setup or a decision · ⬜ not started. Per-task status is marked in the tables below.
@@ -43,7 +44,7 @@ Assumptions: one developer, ideal days; store review and legal review time are e
 
 | # | Task | Done when |
 |---|---|---|
-| ⬜ 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
+| ✅ 0.1 | Decide C2 collection name + app id, C3 game names | Written into the spec; Copter's working id replaced everywhere |
 | ⬜ 0.2 | Send Blocks (C4) for IP review with the canvas board and the rules section | Review requested; answer expected before A4 |
 | ⬜ 0.3 | Confirm Hop presentation rules (C5) | Spec updated |
 
@@ -119,6 +120,17 @@ From the product owner's first play session (2026-10-18). Design details: spec s
 | ✅ F7 | Snake: bonus becomes an animated bomb (2×2 cells, flickering fuse), lasts 8 s, blinks in the last 2 s, value drops with time | Core tests for size, timing and value; rendered frames approved |
 | ✅ F8 | Snake: bottom margin equal to the side margins (field 19×36, border LCD y 13–158) | Rendered image; core tests updated for 36 rows |
 | ✅ F9 | Decide C6 (languages) and C7 (Copter speed ramp); implement if accepted | Spec updated. C6: shared text in `LcdStrings`, width tests in kit and app. C7: second density ramp to distance 4 000 |
+
+## A5.2 — Playtest Round 2 (2026-10-19)
+
+| # | Task | Acceptance |
+|---|---|---|
+| ✅ R1 | Rotor silent on the phone: the F1 tone (56 Hz, smoothed) was below what phone speakers play. Now 98–140 Hz with the harsh top cut | Test: as much 300 Hz–3 kHz energy as the original rotor, less than half its energy above 3 kHz |
+| ✅ R2 | Sounds late, and the app slowing down until Android killed it: a new audio player per sound, never freed (low-latency players report no completion), each polling its position every frame | 3 reusable players per sound, created when a game opens, freed when it closes; position polling off. Tests for freeing |
+| ✅ R3 | Leave a run for the home screen: `All games` in every pause menu; Copter pauses on a score-bar tap (it had no on-screen pause) | Widget and game tests |
+| ✅ R4 | Snake: turns after a shorter slide (18 px), several turns in one stroke without lifting | Gesture tests |
+| 🟡 R5 | Home-screen AdMob banner, remote on/off, consent form, `Ads` key (C8) | Unit and widget tests; test banner seen on the moto g37. Needs the Firebase and AdMob setup |
+| 🟡 R6 | Update prompt, optional and required (C9) | Unit and widget tests. Needs Firebase |
 
 ## A6 — Release
 

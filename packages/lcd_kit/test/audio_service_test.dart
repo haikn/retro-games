@@ -39,6 +39,16 @@ void main() {
     ]);
   });
 
+  test('dispose frees the players and silences the service', () async {
+    await audio.load();
+    await audio.startLoop('hum.wav');
+    await audio.dispose();
+    expect(player.disposed, isTrue);
+    expect(player.looping, isNull);
+    await audio.play('boom.wav');
+    expect(player.played, isEmpty);
+  });
+
   test('nothing plays before load', () async {
     await audio.startLoop('hum.wav');
     await audio.play('boom.wav');

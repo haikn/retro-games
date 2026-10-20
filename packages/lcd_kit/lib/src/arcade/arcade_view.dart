@@ -106,7 +106,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
     WidgetsBinding.instance.removeObserver(this);
     _ticker.dispose();
     _noticeTimer?.cancel();
-    unawaited(_audio.stopLoop());
+    unawaited(_audio.dispose());
     _frame.dispose();
     super.dispose();
   }
@@ -334,6 +334,8 @@ class ArcadeGameViewState extends State<ArcadeGameView>
       if (_gameVisible) ...[
         ArcadeGestureLayer(
           onInput: onInput,
+          swipeThreshold: spec.swipeThreshold,
+          continuousSwipes: spec.continuousSwipes,
           child: CustomPaint(
             size: _size,
             painter: _BufferPainter(_painter, _buffer, _frame),
@@ -524,6 +526,7 @@ class ArcadeGameViewState extends State<ArcadeGameView>
           LcdMenuItem(t.newGame, newGame),
           LcdMenuItem(_soundLabel, toggleSound),
           LcdMenuItem(t.mainMenu, _toMenu),
+          LcdMenuItem(t.allGames, exitToLauncher),
         ],
       ),
     );
